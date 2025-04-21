@@ -1,6 +1,7 @@
 {
   "extends": "typescript-config/base.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "declarationDir": "./dist",
     "outDir": "dist"
   },

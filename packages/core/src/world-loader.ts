@@ -1,7 +1,7 @@
 // packages/core/src/world-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorldType, EntityId, ComponentType, IComponent } from './common/types';
+import { WorldType, EntityId, ComponentType, IComponent } from './common/types.js';
 
 // --- IMPORTA TUTTE LE TUE INTERFACCE COMPONENTE SPECIFICHE QUI ---
 // Assumendo che siano esportate da un file indice o direttamente
@@ -13,7 +13,7 @@ import {
   IsPickupableComponent, PICKUPABLE_COMPONENT_TYPE,
   ButtonStateComponent, BUTTON_STATE_COMPONENT_TYPE,
   // ...importa le altre se necessario
-} from './common/types'; // <-- Assicurati che il percorso sia corretto!
+} from './common/types.js';
 
 // Interfacce helper per la struttura del JSON
 interface JsonComponent {

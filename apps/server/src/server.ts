@@ -4,6 +4,12 @@ import { loadWorldStateFromFile } from 'core/world-loader';
 import { WorldType } from 'core/types';
 import * as fs from 'fs';
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // --- Configuration ---
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces
@@ -65,8 +71,8 @@ async function startServer() {
     process.exit(1);
   }
 
-  return server;
+  return server; // Potrebbe essere utile restituire l'istanza del server
 }
 
-// --- Execute the startup ---
+// --- Esegui l'avvio ---
 startServer();

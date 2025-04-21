@@ -6,34 +6,21 @@
   "description": "",
   "keywords": [],
   "type": "module",
-  "main": "src/main.ts",
-  "types": "./dist/main.d.ts",
-  "files": [
-    "dist",
-    "!dist/tests"
-  ],
   "repository": {
     "type": "git",
     "url": ""
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:dev": "KEEP_SOURCE_MAP=true pnpm build",
-    "publish:dry-run": "pnpm build && pnpm publish --dry-run",
-    "publish:prod": "pnpm build && pnpm publish",
-    "bump-version:patch": "npm version patch",
-    "bump-version:minor": "npm version minor",
-    "bump-version:major": "npm version major",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "format": "prettier --write ."
+    "start": "node dist/server.js",
+    "dev": "nodemon --exec \"node --loader ts-node/esm --require tsconfig-paths/register src/server.ts\"",
+    "build": "rimraf ./dist && tsc"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
     "nodemon": "^3.1.9",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.2.2",
     "typescript-config": "workspace:*",
     "vite": "^5.0.0",

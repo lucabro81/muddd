@@ -1,9 +1,17 @@
 {
-  "extends": "typescript-config/base.json",
   "compilerOptions": {
-    "declarationDir": "./dist",
-    "outDir": "dist"
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "core/*": ["../../packages/core/src/*"]
+    }
   },
-  "include": ["src", "test/GameEventEmitter.test.ts"],
-  "exclude": ["node_modules", "dist", "src/tests"]
+  "include": ["src/**/*"]
 }

@@ -7,8 +7,8 @@
   "keywords": [],
   "type": "module",
   "exports": {
-    "./world-loader": "./src/world-loader.ts",
-    "./types": "./src/common/types.ts"
+    "./world-loader": "./src/world-loader.js",
+    "./types": "./src/common/types.js"
   },
   "main": "src/main.ts",
   "types": "./dist/main.d.ts",
