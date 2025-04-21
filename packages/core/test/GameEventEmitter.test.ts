@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { gameEventEmitter } from './GameEventEmitter';
-import { EventType, EntityMoveEvent } from './events.types';
+import { gameEventEmitter } from '../src/events/GameEventEmitter';
+import { EventType, EntityMoveEvent } from '../src/events/events.types';
 
 describe('GameEventEmitter', () => {
   it('should emit and receive a strongly typed event', () => {
