@@ -1,15 +1,11 @@
 {
-  "name": "core",
+  "name": "server",
   "author": "Luca Brognara",
   "private": false,
   "version": "1.0.0",
   "description": "",
   "keywords": [],
   "type": "module",
-  "exports": {
-    "./world-loader": "./src/world-loader.ts",
-    "./types": "./src/common/types.ts"
-  },
   "main": "src/main.ts",
   "types": "./dist/main.d.ts",
   "files": [
@@ -36,6 +32,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
+    "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "typescript-config": "workspace:*",
@@ -44,6 +41,8 @@
     "vitest": "^1.0.0"
   },
   "dependencies": {
-    "eventemitter2": "^6.4.9"
+    "core": "workspace:*",
+    "fastify": "^5.3.2",
+    "pino-pretty": "^13.0.0"
   }
 }

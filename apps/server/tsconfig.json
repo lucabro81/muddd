@@ -1,0 +1,9 @@
+{
+  "extends": "typescript-config/base.json",
+  "compilerOptions": {
+    "declarationDir": "./dist",
+    "outDir": "dist"
+  },
+  "include": ["src", "test/GameEventEmitter.test.ts"],
+  "exclude": ["node_modules", "dist", "src/tests"]
+}
