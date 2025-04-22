@@ -7,7 +7,7 @@
   "keywords": [],
   "type": "module",
   "exports": {
-    "./world-loader": "./src/world-loader.js",
+    "./utils/world-loader": "./src/utils/world-loader.js",
     "./types": "./src/common/types.js"
   },
   "main": "src/main.ts",

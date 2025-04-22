@@ -1,7 +1,7 @@
 // packages/core/src/state-dispatcher.test.ts
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadWorldStateFromFile } from '../src/world-loader';
+import { loadWorldStateFromFile } from '../src/utils/world-loader';
 import { applyEvent } from '../src/state/state-dispatcher';
 import { WorldType, EntityId } from '../src/common/types';
 import { GameEvent, EntityMoveEvent, EventType } from '../src/events/events.types';

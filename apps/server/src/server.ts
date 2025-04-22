@@ -1,6 +1,6 @@
 import fastify from 'fastify';
 import * as path from 'path';
-import { loadWorldStateFromFile } from 'core/world-loader';
+import { loadWorldStateFromFile } from 'core/utils/world-loader';
 import { WorldType } from 'core/types';
 import * as fs from 'fs';
 
