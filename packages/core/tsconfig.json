@@ -5,6 +5,6 @@
     "declarationDir": "./dist",
     "outDir": "dist"
   },
-  "include": ["src", "test/GameEventEmitter.test.ts"],
+  "include": ["src", "test/game-event-emitter.test.ts"],
   "exclude": ["node_modules", "dist", "src/tests"]
 }

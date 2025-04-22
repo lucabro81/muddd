@@ -16,7 +16,7 @@ import * as fs from 'fs';
 
 // Define the relative path to the root of the package 'core'
 const TEST_FIXTURE_DIR = 'test/fixtures';
-const TEST_WORLD_FILENAME = 'test-world.json';
+const TEST_WORLD_FILENAME = 'temp-test-world.json';
 const WORLD_FIXTURE_PATH = path.join(TEST_FIXTURE_DIR, TEST_WORLD_FILENAME);
 const INVALID_JSON_PATH = path.join(TEST_FIXTURE_DIR, 'invalid-world.json');
 const NONEXISTENT_FILE_PATH = path.join(TEST_FIXTURE_DIR, 'nonexistent-file.json');

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { gameEventEmitter } from '../src/events/GameEventEmitter';
+import { gameEventEmitter } from '../src/events/game-event-emitter';
 import { EventType, EntityMoveEvent } from '../src/events/events.types';
 
 describe('GameEventEmitter', () => {

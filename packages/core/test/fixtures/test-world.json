@@ -1,0 +1,75 @@
+{
+  "entities": [
+    {
+      "id": "room_entrance",
+      "components": [
+        {
+          "type": "description",
+          "name": "Ingresso della Caverna",
+          "keywords": ["caverna", "ingresso", "grotta", "entrata"],
+          "text": "Ti trovi all'ingresso buio e umido di una caverna. Le pareti rocciose gocciolano e l'aria odora di terra bagnata e muschio. Un debole spiffero proviene da nord."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "nord": ["room_inner_cave"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": ["button_rusty"]
+        }
+      ]
+    },
+    {
+      "id": "room_inner_cave",
+      "components": [
+        {
+          "type": "description",
+          "name": "Interno della Caverna",
+          "keywords": ["caverna", "interno", "grotta"],
+          "text": "Sei più all'interno della caverna. È ancora più buio qui, riesci a malapena a distinguere le forme. Senti l'eco dei tuoi passi. L'unica uscita evidente è a sud."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "sud": ["room_entrance"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "button_rusty",
+      "components": [
+        {
+          "type": "description",
+          "name": "Bottone Arrugginito su Piastra",
+          "keywords": [
+            "bottone",
+            "pulsante",
+            "arrugginito",
+            "ruggine",
+            "piastra",
+            "cavo"
+          ],
+          "text": "Un pulsante di metallo arrugginito è fissato al centro di una robusta piastra metallica ancorata al pavimento. Dalla piastra parte un spesso cavo nero e fibroso che si perde nell'ombra vicina."
+        },
+        {
+          "type": "location",
+          "roomId": "room_entrance"
+        },
+        {
+          "type": "buttonState",
+          "isPushed": false
+        },
+        {
+          "type": "pickupable"
+        }
+      ]
+    }
+  ]
+}
