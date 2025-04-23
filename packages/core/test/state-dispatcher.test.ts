@@ -1,5 +1,3 @@
-// packages/core/src/state-dispatcher.test.ts
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import { loadWorldStateFromFile } from '../src/utils/world-loader';
 import { applyEvent } from '../src/state/state-dispatcher';
