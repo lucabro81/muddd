@@ -1,8 +1,7 @@
 // packages/core/src/state-reducers.ts
 
-import { WorldType, EntityId, ComponentType, IComponent } from '../common/types.js';
-import { GameEvent, EntityMoveEvent, EventType } from '../events/events.types.js';
-import { IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE } from '../common/types.js';
+import { IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, WorldType } from '../common/types.js';
+import { EntityMoveEvent } from '../events/events.types.js';
 
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.

@@ -7,12 +7,13 @@
   "keywords": [],
   "type": "module",
   "exports": {
-    "./utils/world-loader": "./src/utils/world-loader.js",
-    "./utils/world-loader.js": "./src/utils/world-loader.js",
-    "./types": "./src/common/types.js",
-    "./core": "./src/*"
+    "./utils/world-loader": "./dist/utils/world-loader.js",
+    "./utils/world-loader.js": "./dist/utils/world-loader.js",
+    "./types": "./dist/common/types.js",
+    "./core": "./dist/main.js",
+    "./main.js": "./dist/main.js"
   },
-  "main": "src/main.ts",
+  "main": "dist/main.js",
   "types": "./dist/main.d.ts",
   "files": [
     "dist",
@@ -24,7 +25,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build:vite": "vite build",
+    "build": "tsc",
+    "build:node": "vite build --target node",
     "build:dev": "KEEP_SOURCE_MAP=true pnpm build",
     "publish:dry-run": "pnpm build && pnpm publish --dry-run",
     "publish:prod": "pnpm build && pnpm publish",

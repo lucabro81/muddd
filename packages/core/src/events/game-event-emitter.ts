@@ -1,6 +1,10 @@
 // packages/core/src/events/GameEventEmitter.ts
-import { EventEmitter2, Listener } from 'eventemitter2';
+import { type Listener } from 'eventemitter2';
 import { GameEvent } from './events.types.js'; // Importa il tipo unione
+
+// to build into esm
+import pkg from 'eventemitter2';
+const { EventEmitter2 } = pkg;
 
 class GameEventEmitter extends EventEmitter2 {
   constructor() {
@@ -14,7 +18,7 @@ class GameEventEmitter extends EventEmitter2 {
   emit<T extends GameEvent>(type: GameEvent['type'], event: T): boolean {
     console.log(`Emitting Event: ${event.type}`, event); // Logging utile per il debug iniziale
     // Usiamo il tipo di evento come nome dell'evento per l'emitter
-    return super.emit(event.type, event);
+    return super.emit(type, event);
   }
 
   // Metodo per ascoltare con type safety (overload o generics)

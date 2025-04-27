@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "core/*": ["../../packages/core/src/*"]
+      "core/*": ["../../packages/core/dist/*"]
     }
   },
   "include": ["src/**/*"]

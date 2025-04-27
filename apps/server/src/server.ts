@@ -1,4 +1,4 @@
-import { type WorldType } from 'core/common/types.js';
+import { type WorldType } from 'core/main.js';
 import { buildServer, loadingWorldState } from './utils.js';
 
 // --- Configuration ---

@@ -5,7 +5,7 @@ import { resolve } from 'path';
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/main.ts'),
+      entry: resolve(__dirname, 'src/server.ts'),
       name: 'server',
       fileName: 'main',
       formats: ['es', 'umd']

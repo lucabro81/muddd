@@ -1,6 +1,6 @@
 import { WebSocket } from "@fastify/websocket";
-import { WorldType } from "core/common/types.js";
 import { type FastifyInstance, type FastifyRequest } from "fastify";
+import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext } from "core/main.js"
 
 export function routes(server: FastifyInstance, worldState: WorldType | null) {
 
@@ -33,12 +33,27 @@ export function routes(server: FastifyInstance, worldState: WorldType | null) {
       const messageString = message.toString();
       server.log.info(`Received from ${clientId}: ${messageString}`);
 
-      // --- TODO: Future Logic ---
-      // 1. Here you would pass `messageString` to the CommandParser from the core.
-      // 2. The parser would return a GameEvent (e.g. PlayerCommand).
-      // 3. You would emit that event with `gameEventEmitter.emit(...)`.
-      // 4. The listener we set above will call applyEvent to update the state.
-      // 5. You would send the appropriate output/response to the client via `connection.socket.send(...)`.
+      // Prepare the context for the parser
+      // TODO: Replace 'clientId' with the EntityId of the real player associated with this connection
+      const parserContext: CommandParserContext = {
+        actorId: clientId
+      };
+
+
+      const commandEvent = parseCommand(messageString, parserContext);
+      if (commandEvent) {
+        gameEventEmitter.emit(commandEvent.type, commandEvent);
+      }
+
+      if (commandEvent) {
+        gameEventEmitter.emit(commandEvent.type, commandEvent);
+        server.log.info(`Emitted ${commandEvent.type} for ${clientId}`);
+
+        connection.send(`Command parsed: verb='${commandEvent.verb}', args='${commandEvent.args?.join(' ')}'`);
+
+      } else {
+        connection.send(`Could not parse empty input.`);
+      }
 
       // For now, we send a confirmation echo
       connection.send(`Server received: ${messageString}`);

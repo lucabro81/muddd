@@ -1,8 +1,5 @@
 import { server } from "./utils.js";
-import { type WorldType } from "core/common/types.js";
-import { gameEventEmitter } from "core/events/game-event-emitter.js";
-import { type GameEvent } from "core/events/events.types.js";
-import { applyEvent } from "core/state/state-dispatcher.js";
+import { type WorldType, gameEventEmitter, type GameEvent, applyEvent } from "core/main.js"
 
 const setGameEventEmitter = (worldState: WorldType | null) => {
   gameEventEmitter.on('*', (event: GameEvent) => {

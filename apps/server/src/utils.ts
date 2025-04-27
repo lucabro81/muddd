@@ -2,11 +2,9 @@ import fastify, { type FastifyInstance } from "fastify";
 import path, { dirname } from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { type WorldType } from "core/common/types.js";
-import { loadWorldStateFromFile } from "core/utils/world-loader.js";
 import fastifyWebsocket from "@fastify/websocket";
 import { routes } from "./routes.js";
-
+import { type WorldType, loadWorldStateFromFile } from "core/main.js";
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
