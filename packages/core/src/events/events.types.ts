@@ -19,4 +19,13 @@ export interface EntityMoveEvent extends BaseEvent {
   destinationRoomId: RoomId;
 }
 
-export type GameEvent = EntityMoveEvent;
+export interface PlayerCommandEvent extends BaseEvent {
+  type: EventType.PLAYER_COMMAND;
+  entityId: EntityId;
+  rawInput: RoomId;
+  verb?: string;
+  args?: string[];
+  argString?: string;
+}
+
+export type GameEvent = EntityMoveEvent | PlayerCommandEvent;
