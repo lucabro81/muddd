@@ -4,6 +4,8 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { type WorldType } from "core/common/types.js";
 import { loadWorldStateFromFile } from "core/utils/world-loader.js";
+import fastifyWebsocket from "@fastify/websocket";
+import { routes } from "./routes.js";
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -20,6 +22,15 @@ export const server = fastify({
     },
   },
 });
+
+export async function buildServer(worldState: WorldType | null): Promise<FastifyInstance> {
+  if (!worldState) {
+    throw new Error('World state is not loaded');
+  }
+  await server.register(fastifyWebsocket);
+  routes(server, worldState);
+  return server;
+}
 
 export function loadingWorldState(): WorldType | null {
 

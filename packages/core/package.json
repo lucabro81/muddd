@@ -8,6 +8,7 @@
   "type": "module",
   "exports": {
     "./utils/world-loader": "./src/utils/world-loader.js",
+    "./utils/world-loader.js": "./src/utils/world-loader.js",
     "./types": "./src/common/types.js",
     "./core": "./src/*"
   },
