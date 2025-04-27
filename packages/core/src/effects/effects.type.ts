@@ -1,4 +1,4 @@
-import { EntityId, RoomId } from '../common/types';
+import { EntityId, RoomId } from '../common/types.js';
 
 export enum EffectType {
   TEMPORARY_MODIFIER = 'TemporaryModifier',

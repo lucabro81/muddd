@@ -8,7 +8,8 @@
   "type": "module",
   "exports": {
     "./utils/world-loader": "./src/utils/world-loader.js",
-    "./types": "./src/common/types.js"
+    "./types": "./src/common/types.js",
+    "./core": "./src/*"
   },
   "main": "src/main.ts",
   "types": "./dist/main.d.ts",

@@ -1,6 +1,6 @@
 // packages/core/src/events/GameEventEmitter.ts
 import { EventEmitter2, Listener } from 'eventemitter2';
-import { GameEvent } from './events.types'; // Importa il tipo unione
+import { GameEvent } from './events.types.js'; // Importa il tipo unione
 
 class GameEventEmitter extends EventEmitter2 {
   constructor() {
@@ -20,7 +20,7 @@ class GameEventEmitter extends EventEmitter2 {
   // Metodo per ascoltare con type safety (overload o generics)
   // Questo è un esempio semplice, potresti voler migliorare la type safety qui
   on<T extends GameEvent>(
-    eventType: T['type'], // Ascolta sul tipo specifico dell'evento
+    eventType: T['type'] | '*', // Ascolta sul tipo specifico dell'evento
     listener: (event: T) => void
   ): this | Listener {
     return super.on(eventType, listener as (event: GameEvent) => void);

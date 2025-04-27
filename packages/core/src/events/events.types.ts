@@ -1,5 +1,5 @@
 // packages/core/src/events/events.types.ts
-import { EntityId, RoomId, Timestamp } from '../common/types';
+import { EntityId, RoomId, Timestamp } from '../common/types.js';
 
 export enum EventType {
   PLAYER_COMMAND = 'PlayerCommand',

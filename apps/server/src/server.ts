@@ -1,20 +1,10 @@
-import fastify from 'fastify';
-import * as path from 'path';
-import { loadWorldStateFromFile } from 'core/utils/world-loader';
-import { WorldType } from 'core/types';
-import * as fs from 'fs';
-
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
+import { fastifyWebsocket } from '@fastify/websocket';
+import { server, loadingWorldState } from './utils.js';
+import { type WorldType } from 'core/common/types.js';
+import { routes } from './routes.js';
 // --- Configuration ---
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces
-
-const worldJsonPath = path.resolve(__dirname, '../data/world.json');
 
 // --- Server State ---
 let worldState: WorldType | null = null;
@@ -23,42 +13,11 @@ let worldState: WorldType | null = null;
 async function startServer() {
   console.log('Initializing MUD server...');
 
-  // 1. Load Initial World State
-  try {
-    console.log(`Loading world state from: ${worldJsonPath}`);
-    if (!fs.existsSync(worldJsonPath)) {
-      throw new Error(`World JSON file not found at resolved path: ${worldJsonPath}. Current directory: ${process.cwd()}`);
-    }
-    worldState = loadWorldStateFromFile(worldJsonPath);
-    console.log(`World state loaded. Entities: ${worldState?.size || 0}`);
-  } catch (error) {
-    console.error('FATAL ERROR: Could not load world state on startup.');
-    console.error(error);
-    process.exit(1);
-  }
+  worldState = loadingWorldState();
 
-  // 2. Create Fastify Instance
-  const server = fastify({
-    logger: {
-      level: 'info',
-      transport: {
-        target: 'pino-pretty',
-        options: {
-          translateTime: 'HH:MM:ss Z',
-          ignore: 'pid,hostname',
-        },
-      },
-    },
-  });
+  server.register(fastifyWebsocket);
 
-  // 3. Register Routes (Example Status)
-  server.get('/status', async (_request, reply) => {
-    return reply.send({
-      status: 'running',
-      worldEntitiesLoaded: worldState?.size ?? 0,
-      timestamp: new Date().toISOString(),
-    });
-  });
+  routes(server, worldState);
 
   // TODO: Register WebSocket handler for client connections
 

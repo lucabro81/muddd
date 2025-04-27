@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { loadWorldStateFromFile } from '../src/utils/world-loader';
 import { applyEvent } from '../src/state/state-dispatcher';
-import { WorldType, EntityId } from '../src/common/types';
-import { GameEvent, EntityMoveEvent, EventType } from '../src/events/events.types';
-import { IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE } from '../src/common/types';
+import { WorldType, EntityId } from '../src/common/types.js';
+import { GameEvent, EntityMoveEvent, EventType } from '../src/events/events.types.js';
+import { IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE } from '../src/common/types.js';
 
 const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 

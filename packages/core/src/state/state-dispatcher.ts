@@ -1,6 +1,6 @@
-import { WorldType } from '../common/types';
-import { GameEvent, EventType, EntityMoveEvent } from '../events/events.types';
-import { entityMoveReducer } from './state-reducers';
+import { WorldType } from '../common/types.js';
+import { GameEvent, EventType, EntityMoveEvent } from '../events/events.types.js';
+import { entityMoveReducer } from './state-reducers.js';
 
 /**
  * Central function to apply an event to the world state.

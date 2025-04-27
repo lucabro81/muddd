@@ -5,8 +5,8 @@ import {
   LOCATION_COMPONENT_TYPE,
   PICKUPABLE_COMPONENT_TYPE,
   BUTTON_STATE_COMPONENT_TYPE
-} from './../src/common/types';
-import { WorldType, EntityId, DescriptionComponent, InventoryComponent, ButtonStateComponent } from './../src/common/types';
+} from './../src/common/types.js';
+import { WorldType, EntityId, DescriptionComponent, InventoryComponent, ButtonStateComponent } from './../src/common/types.js';
 import { loadWorldStateFromFile } from '../src/utils/world-loader';
 // packages/core/src/world-loader.test.ts
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
