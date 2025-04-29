@@ -3,6 +3,7 @@ import { type WorldType, gameEventEmitter, type GameEvent, applyEvent } from "co
 
 const setGameEventEmitter = (worldState: WorldType | null) => {
   gameEventEmitter.on('*', (event: GameEvent) => {
+    server.log.info(`[gameEventEmitter] Received event: ${event.type}`);
     if (!worldState || !event?.type) return;
     try {
       worldState = applyEvent(worldState, event);

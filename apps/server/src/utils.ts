@@ -4,7 +4,8 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import fastifyWebsocket from "@fastify/websocket";
 import { routes } from "./routes.js";
-import { type WorldType, loadWorldStateFromFile } from "core/main.js";
+import { GameEvent, type WorldType, applyEvent, gameEventEmitter, loadWorldStateFromFile } from "core/main.js";
+import { setGameEventEmitter } from "./game-event-emitter.js";
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
@@ -26,6 +27,7 @@ export async function buildServer(worldState: WorldType | null): Promise<Fastify
     throw new Error('World state is not loaded');
   }
   await server.register(fastifyWebsocket);
+  setGameEventEmitter(worldState);
   routes(server, worldState);
   return server;
 }

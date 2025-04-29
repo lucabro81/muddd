@@ -6,8 +6,16 @@ export const LOCATION_COMPONENT_TYPE = 'location';
 export const INVENTORY_COMPONENT_TYPE = 'inventory';
 export const PICKUPABLE_COMPONENT_TYPE = 'pickupable';
 export const BUTTON_STATE_COMPONENT_TYPE = 'buttonState';
+export const PLAYER_COMPONENT_TYPE = 'player';
 
-export type ComponentType = typeof DESCRIPTION_COMPONENT_TYPE | typeof CONNECTIONS_COMPONENT_TYPE | typeof LOCATION_COMPONENT_TYPE | typeof INVENTORY_COMPONENT_TYPE | typeof PICKUPABLE_COMPONENT_TYPE | typeof BUTTON_STATE_COMPONENT_TYPE;
+export type ComponentType =
+  typeof DESCRIPTION_COMPONENT_TYPE |
+  typeof CONNECTIONS_COMPONENT_TYPE |
+  typeof LOCATION_COMPONENT_TYPE |
+  typeof INVENTORY_COMPONENT_TYPE |
+  typeof PICKUPABLE_COMPONENT_TYPE |
+  typeof BUTTON_STATE_COMPONENT_TYPE |
+  typeof PLAYER_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 
@@ -23,3 +31,4 @@ export interface IsPresentInRoomComponent extends IComponent { type: typeof LOCA
 export interface InventoryComponent extends IComponent { type: typeof INVENTORY_COMPONENT_TYPE; items: EntityId[]; }
 export interface IsPickupableComponent extends IComponent { type: typeof PICKUPABLE_COMPONENT_TYPE; }
 export interface ButtonStateComponent extends IComponent { type: typeof BUTTON_STATE_COMPONENT_TYPE; isPushed: boolean; }
+export interface PlayerComponent extends IComponent { type: typeof PLAYER_COMPONENT_TYPE; clientId: string; }

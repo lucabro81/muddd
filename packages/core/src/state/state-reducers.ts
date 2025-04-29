@@ -2,7 +2,7 @@
 
 import { IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, WorldType } from '../common/types.js';
 import { EntityMoveEvent } from '../events/events.types.js';
-
+import util from 'util';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
  * Operate in an immutable way, returning a new WorldType map.
@@ -44,5 +44,6 @@ export function entityMoveReducer(
   nextState.set(entityId, nextEntityComponents);
 
   // 5. Return the NEW complete state
+  console.log(`[entityMoveReducer] New state after moving entity ${entityId} to room ${destinationRoomId}: ${util.inspect(nextState)}`);
   return nextState;
 }

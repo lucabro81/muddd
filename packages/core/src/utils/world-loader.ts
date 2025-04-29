@@ -12,6 +12,7 @@ import {
   InventoryComponent, INVENTORY_COMPONENT_TYPE,
   IsPickupableComponent, PICKUPABLE_COMPONENT_TYPE,
   ButtonStateComponent, BUTTON_STATE_COMPONENT_TYPE,
+  PlayerComponent, PLAYER_COMPONENT_TYPE,
   // ...importa le altre se necessario
 } from '../common/types.js';
 
@@ -85,6 +86,13 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
     return null;
   },
 
+  [PLAYER_COMPONENT_TYPE]: (data): PlayerComponent | null => {
+    if (typeof data.clientId === 'string') {
+      return { type: PLAYER_COMPONENT_TYPE, clientId: data.clientId };
+    }
+    console.error(`Invalid data for PlayerComponent:`, data);
+    return null;
+  },
   // Aggiungi qui le factory per *tutti* gli altri tipi di componente che definirai!
 
 };

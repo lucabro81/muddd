@@ -11,6 +11,7 @@ let worldState: WorldType | null = null;
 async function startServer() {
   worldState = loadingWorldState();
   const server = await buildServer(worldState);
+  server.log.info(`[server] World state loaded: ${worldState?.size} entities.`);
   try {
     await server.listen({ port: PORT, host: HOST });
   } catch (err) {
