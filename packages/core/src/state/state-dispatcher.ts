@@ -152,6 +152,9 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       // It simply interprets and potentially emits a more specific event.
       // The state modification will occur when the specific event (e.g. EntityMoveEvent)
       // is processed in the next cycle by this same switch.
+
+      console.log(`[applyEvent] Current state after processing player command: ${currentState.size} entities.`);
+
       return currentState;
 
     default:
