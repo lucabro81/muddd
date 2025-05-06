@@ -39,6 +39,9 @@ importers:
       '@types/react':
         specifier: ^18.0.32
         version: 18.3.21
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vdemedes/prettier-config':
         specifier: ^2.0.1
         version: 2.0.1
@@ -123,13 +126,13 @@ importers:
         version: link:../../packages/typescript-config
       vite:
         specifier: ^5.0.0
-        version: 5.4.18(@types/node@22.14.0)
+        version: 5.4.18(@types/node@22.14.0)(terser@5.39.0)
       vite-plugin-dts:
         specifier: ^3.6.0
-        version: 3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0))
+        version: 3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0)(terser@5.39.0))
       vitest:
         specifier: ^1.0.0
-        version: 1.6.1(@types/node@22.14.0)
+        version: 1.6.1(@types/node@22.14.0)(terser@5.39.0)
 
   packages/core:
     dependencies:
@@ -157,13 +160,13 @@ importers:
         version: link:../typescript-config
       vite:
         specifier: ^5.0.0
-        version: 5.4.18(@types/node@22.14.0)
+        version: 5.4.18(@types/node@22.14.0)(terser@5.39.0)
       vite-plugin-dts:
         specifier: ^3.6.0
-        version: 3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0))
+        version: 3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0)(terser@5.39.0))
       vitest:
         specifier: ^1.0.0
-        version: 1.6.1(@types/node@22.14.0)
+        version: 1.6.1(@types/node@22.14.0)(terser@5.39.0)
 
   packages/eslint-config:
     devDependencies:
@@ -7487,13 +7490,13 @@ snapshots:
 
   validator@13.15.0: {}
 
-  vite-node@1.6.1(@types/node@22.14.0):
+  vite-node@1.6.1(@types/node@22.14.0)(terser@5.39.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.0(supports-color@5.5.0)
       pathe: 1.1.2
       picocolors: 1.1.1
-      vite: 5.4.18(@types/node@22.14.0)
+      vite: 5.4.18(@types/node@22.14.0)(terser@5.39.0)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -7505,7 +7508,7 @@ snapshots:
       - supports-color
       - terser
 
-  vite-plugin-dts@3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0)):
+  vite-plugin-dts@3.9.1(@types/node@22.14.0)(rollup@4.40.0)(typescript@5.8.2)(vite@5.4.18(@types/node@22.14.0)(terser@5.39.0)):
     dependencies:
       '@microsoft/api-extractor': 7.43.0(@types/node@22.14.0)
       '@rollup/pluginutils': 5.1.4(rollup@4.40.0)
@@ -7516,13 +7519,13 @@ snapshots:
       typescript: 5.8.2
       vue-tsc: 1.8.27(typescript@5.8.2)
     optionalDependencies:
-      vite: 5.4.18(@types/node@22.14.0)
+      vite: 5.4.18(@types/node@22.14.0)(terser@5.39.0)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
       - supports-color
 
-  vite@5.4.18(@types/node@22.14.0):
+  vite@5.4.18(@types/node@22.14.0)(terser@5.39.0):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.5.3
@@ -7530,8 +7533,9 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.14.0
       fsevents: 2.3.3
+      terser: 5.39.0
 
-  vitest@1.6.1(@types/node@22.14.0):
+  vitest@1.6.1(@types/node@22.14.0)(terser@5.39.0):
     dependencies:
       '@vitest/expect': 1.6.1
       '@vitest/runner': 1.6.1
@@ -7550,8 +7554,8 @@ snapshots:
       strip-literal: 2.1.1
       tinybench: 2.9.0
       tinypool: 0.8.4
-      vite: 5.4.18(@types/node@22.14.0)
-      vite-node: 1.6.1(@types/node@22.14.0)
+      vite: 5.4.18(@types/node@22.14.0)(terser@5.39.0)
+      vite-node: 1.6.1(@types/node@22.14.0)(terser@5.39.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.14.0
