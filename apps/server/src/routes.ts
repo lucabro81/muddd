@@ -1,12 +1,11 @@
-import { WebSocket } from "@fastify/websocket";
+import { type WebSocket } from "@fastify/websocket";
 import { type FastifyInstance, type FastifyRequest } from "fastify";
 import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext, ComponentType, IComponent, DESCRIPTION_COMPONENT_TYPE, DescriptionComponent, IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, EntityId, INVENTORY_COMPONENT_TYPE, InventoryComponent } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
-const clientConnections = new Map<string, { connection: WebSocket, playerId: EntityId }>();
 const STARTING_ROOM_ID: EntityId = 'room_entrance';
 
-export function routes(server: FastifyInstance, worldState: WorldType | null) {
+export function routes(server: FastifyInstance, worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId }>) {
 
   if (!worldState) {
     throw new Error('World state is not loaded');

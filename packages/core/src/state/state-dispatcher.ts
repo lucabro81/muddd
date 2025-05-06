@@ -31,13 +31,11 @@ const directionAliases: Record<string, string> = {
   giu: 'giu',
 } as const;
 
-function getComponent<T extends IComponent>(
+export function getComponent<T extends IComponent>(
   state: WorldType,
   entityId: EntityId,
   componentType: ComponentType
 ): T | undefined {
-  console.log("entityId", entityId);
-  console.log("componentType", componentType);
   return state.get(entityId)?.get(componentType) as T | undefined;
 }
 
@@ -50,7 +48,6 @@ function isThereAValidDirection(args: string[]): boolean {
 }
 
 function getLocationId(currentState: WorldType, actorId: EntityId): RoomId | undefined {
-  console.log("currentState", currentState);
   const locationComponent = getComponent<IsPresentInRoomComponent>(currentState, actorId, LOCATION_COMPONENT_TYPE);
   if (!locationComponent) {
     console.error(`[applyEvent] Unable to find the location for the actor ${actorId}`);
@@ -82,7 +79,10 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       const args = event.args || [];
       const actorId = event.entityId;
 
-      const moveVerbs = ['vai', 'go', 'muoviti', 'spostati', 'n', 's', 'e', 'o', 'w', 'ne', 'no', 'se', 'so', 'u', 'd', 'up', 'down', 'nord', 'sud', 'est', 'ovest', 'nordest', 'nordovest', 'sudest', 'sudovest', 'su', 'giu'];
+      const moveVerbs = [
+        'vai', 'go', 'muoviti', 'spostati',
+        'n', 's', 'e', 'o', 'w', 'ne', 'no', 'se', 'so', 'u', 'd',
+        'up', 'down', 'nord', 'sud', 'est', 'ovest', 'nordest', 'nordovest', 'sudest', 'sudovest', 'su', 'giu'];
 
       if (!verb) {
         console.error(`[applyEvent] Player command event has no verb: ${event}`);

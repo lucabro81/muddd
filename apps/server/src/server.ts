@@ -1,4 +1,4 @@
-import { type WorldType } from 'core/main.js';
+import { EntityId, OllamaProvider, type WorldType } from 'core/main.js';
 import { buildServer, loadingWorldState } from './utils.js';
 
 // --- Configuration ---
