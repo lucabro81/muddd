@@ -62,7 +62,7 @@ export async function generateRoomDescription(
     if (items.length > 0) {
       // itemsString = `Vedi qui: ${itemNames.join(', ')}.`;
       const itemString = items.map((item, index) => `\t${index + 1}. Oggetto: ${item.name}\n\tDescrizione: ${item.description}`).join('\n');
-      itemsString = `Vedi qui: \n${itemString}.`;
+      itemsString = `\n${itemString}.`;
     }
   }
 
@@ -99,15 +99,39 @@ export async function generateRoomDescription(
 
   // --- 2. Build the Prompt ---
   // This is a VERY BASIC example, it will be iterated!
-  const prompt = `Sei un narratore MUD fantasy. Descrivi la seguente stanza in seconda persona, come se stessi parlando direttamente al lettore. Sii conciso ma non sacrificare la forma, cerca di essere evocativo. Rispondi SOLO con la descrizione della stanza.
-Stanza: ${roomDesc.name}
-Descrizione Base: ${roomDesc.text}
-Oggetti Presenti: ${itemsString}
-Altre Creature/Persone Presenti: ${otherEntitiesString || 'Nessuno.'}
-Uscite: ${exitsString}
-Entrata: ''
+  const prompt = `Sei un narratore fantasy per un MUD testuale. 
+  Il tuo compito è generare la descrizione di una stanza **in seconda persona**, come se parlassi direttamente al giocatore.
+  Scrivi in tono conciso ma evocativo, senza diventare piatto.
+  ⚠️ Non stai creando narrativa, stai descrivendo **ciò che si vede**. Il tuo stile può evocare atmosfera, ma **non deve mai aggiungere nulla che non sia presente nei dati forniti**.
+  ❌ Non inventare MAI oggetti, dettagli architettonici, suoni, odori, luci, creature o passaggi non esplicitamente indicati nei dati.
+  ✅ Devi SEMPRE includere **tutti** gli oggetti visibili e **tutte** le uscite visibili nella descrizione finale.
 
-Cita le entrate e le uscite, narra le entrate in modo diverso dalle uscite, l'utente sa da dove è arrivato`;
+  📏 Ogni descrizione deve:
+  1. Restituire l'atmosfera secondo la "Descrizione Base".
+  2. Includere in modo naturale ogni oggetto che trovi nella sezione “Oggetti Visibili”.
+  3. Includere in modo naturale ogni entità presente nella stanza, se esistono.
+  4. Terminare sempre includendo in modo naturale un riferimento chiaro alle uscite visibili.
+  5. Non fare riferimento al punto di ingresso, a meno che non sia esplicitamente indicato, se indicato includilo in modo naturale nel testo della descirizone.
+
+  Rispondi **solo** con la descrizione della stanza, in prosa coerente.
+  
+  ---
+
+  ### Dati Stanza
+  • **Nome**: ${roomDesc.name}
+
+  • **Descrizione Base**: ${roomDesc.text}
+
+  • **Oggetti Visibili**:
+  ${itemsString}
+
+  • **Entità Presenti**:${otherEntitiesString || 'Nessuno.'}
+
+  • **Uscite Visibili**: ${exitsString}
+
+  • **Punto di Ingresso**: ${'Nessuno.'}
+
+  Ricorda: non puoi inventare nulla. Devi includere tutti gli oggetti visibili e tutte le uscite visibili.`;
 
   console.log(`[DescEngine] Built prompt (length ${prompt.length}):\n--- PROMPT START ---\n${prompt}\n--- PROMPT END ---`);
 

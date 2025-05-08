@@ -38,7 +38,7 @@
         },
         {
           "type": "inventory",
-          "items": []
+          "items": ["button_rusty"]
         }
       ]
     },

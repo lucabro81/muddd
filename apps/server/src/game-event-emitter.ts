@@ -3,10 +3,10 @@ import { type WebSocket } from "@fastify/websocket";
 import { type WorldType, gameEventEmitter, type GameEvent, applyEvent, EventType, EntityMoveEvent, EntityId, generateRoomDescription, OllamaProvider } from "core/main.js"
 
 const ollamaBaseUrl = process.env.OLLAMA_BASE_URL
-const llmModel = process.env.LLM_MODEL;
+const llmModel = process.env.OLLAMA_MODEL;
 
 if (!ollamaBaseUrl || !llmModel) {
-  throw new Error('OLLAMA_BASE_URL and LLM_MODEL must be set');
+  throw new Error('OLLAMA_BASE_URL and OLLAMA_MODEL must be set');
 }
 
 const llmProvider = new OllamaProvider(ollamaBaseUrl);

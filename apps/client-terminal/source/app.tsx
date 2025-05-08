@@ -15,9 +15,8 @@
 
 import React, {useState, useEffect, useRef} from 'react';
 import {Box, Text, useInput, useApp} from 'ink';
-// Potrebbe servire TextInput se non si usa useInput direttamente per l'input
 // import TextInput from 'ink-text-input';
-import WebSocket from 'ws'; // Usa la libreria 'ws' per il client Node.js
+import WebSocket from 'ws';
 
 // Configurazioni
 const SERVER_URL = process.env['MUD_SERVER_URL'] || 'ws://localhost:3000/ws';
@@ -29,7 +28,7 @@ export default function App() {
 	const [inputValue, setInputValue] = useState('');
 	const wsRef = useRef<WebSocket | null>(null);
 
-	// Effetto per gestire la connessione WebSocket
+	// Effect to handle the WebSocket connection
 	useEffect(() => {
 		const connectWebSocket = () => {
 			console.log(`Attempting to connect to ${SERVER_URL}...`);
@@ -43,12 +42,44 @@ export default function App() {
 			});
 
 			ws.on('message', (data: Buffer) => {
-				const message = data.toString();
-				// Aggiungi ogni riga del messaggio come linea separata
-				message.split('\n').forEach(line => {
-					setOutputLines(prev => [...prev, line]);
-				});
-				console.log('Received message:', message);
+				const rawMessage = data.toString();
+				console.log('Raw message received:', rawMessage);
+				try {
+					const message = JSON.parse(rawMessage);
+
+					// Gestisci diversi tipi di messaggi strutturati
+					switch (message.type) {
+						case 'text': // Messaggio di testo semplice (benvenuto, echo, newline)
+						case 'error': // Messaggio di errore
+							setOutputLines(prev => [...prev, message.payload]);
+							break;
+						case 'stream_chunk':
+							// Appendi il chunk all'ultima linea dell'output
+							setOutputLines(prev => {
+								if (prev.length === 0) {
+									// Se non c'è output, inizia una nuova linea
+									return [message.payload];
+								}
+								const lastIndex = prev.length - 1;
+								// Crea un nuovo array per l'aggiornamento di stato di React
+								const newOutput = [...prev];
+								// Modifica l'ultima linea aggiungendo il chunk
+								newOutput[lastIndex] =
+									(newOutput[lastIndex] || '') + message.payload;
+								return newOutput;
+							});
+							break;
+						default:
+							// Messaggio non strutturato o tipo sconosciuto, aggiungilo com'è
+							console.warn('Received unhandled message format:', message);
+							setOutputLines(prev => [...prev, rawMessage]);
+							break;
+					}
+				} catch (e) {
+					// Se il messaggio non è JSON, trattalo come testo semplice
+					console.log('Received non-JSON message:', rawMessage);
+					setOutputLines(prev => [...prev, rawMessage]);
+				}
 			});
 
 			ws.on('close', (code: number, reason: Buffer) => {
@@ -60,7 +91,7 @@ export default function App() {
 					'Attempting to reconnect in 5s...',
 				]);
 				wsRef.current = null;
-				// Prova a riconnetterti dopo un po'
+				// Try to reconnect after a while
 				setTimeout(connectWebSocket, 5000);
 			});
 
@@ -135,52 +166,6 @@ export default function App() {
 			>
 				<Text>{isConnected ? 'Connected' : 'Disconnected'}&gt; Input: </Text>
 				<Text>{inputValue}</Text>
-				{/* Cursor (simulato) */}
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
-				<Text> </Text>
 				<Text>█</Text>
 			</Box>
 		</Box>
