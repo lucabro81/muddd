@@ -11,7 +11,7 @@ if (!ollamaBaseUrl || !llmModel) {
 
 const llmProvider = new OllamaProvider(ollamaBaseUrl);
 
-const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId }>) => {
+const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId, connectionId: string }>) => {
   gameEventEmitter.on('*', async (event: GameEvent) => {
     server.log.info(`[gameEventEmitter] Received event: ${event.type}`);
     if (!worldState || !event?.type) return;
@@ -41,7 +41,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
 
       // Find the websocket connection for this player
       // (We might need to iterate the values of clientConnections if the key is req.id)
-      let clientData: { connection: WebSocket, playerId: EntityId } | undefined;
+      let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
       for (const data of clientConnections.values()) {
         if (data.playerId === playerId) {
           clientData = data;
@@ -49,10 +49,12 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
         }
       }
 
+      // TBD: is worldState check needed?
       if (clientData && worldState) { // Ensure the client is still connected and the state exists
         server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Generating description...`);
         try {
-          const description = await generateRoomDescription(
+          // 1. Get the async iterable from the engine
+          const descriptionStream = await generateRoomDescription(
             llmProvider,
             worldState,
             destinationRoomId,
@@ -60,7 +62,23 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
             llmModel
           );
 
-          clientData.connection.send(`\n${description}\n`); // Add newline for readability
+          if (!clientConnections.has(clientData.connectionId)) {
+            server.log.warn(`Client ${playerId} disconnected while streaming description.`);
+            return;
+          }
+
+          // Send an initial newline for visual separation in the client
+          clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+
+          // 2. Iterate on the stream and send the chunks to the client
+          for await (const chunk of descriptionStream) {
+            clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
+          }
+
+          // Add a final newline for separation from the next input/output
+          clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+
+          server.log.info(`Finished streaming description to ${playerId}.`);
 
         } catch (descriptionError) {
           server.log.error({ err: descriptionError, roomId: destinationRoomId }, "Failed to generate or send room description");

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const STARTING_ROOM_ID: EntityId = 'room_entrance';
 
-export function routes(server: FastifyInstance, worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId }>) {
+export function routes(server: FastifyInstance, worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId, connectionId: string }>) {
 
   if (!worldState) {
     throw new Error('World state is not loaded');
@@ -59,7 +59,7 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
     worldState.set(playerId, playerComponents);
     server.log.info(`Added player entity ${playerId} to world state in room ${STARTING_ROOM_ID}. Total entities: ${worldState.size}`);
 
-    clientConnections.set(connectionId, { connection: connection, playerId: playerId });
+    clientConnections.set(connectionId, { connection: connection, playerId: playerId, connectionId: connectionId });
 
     connection.send(`Welcome ${description.name}! You are in ${STARTING_ROOM_ID}.`);
     // TODO: Inviare la descrizione della stanza iniziale

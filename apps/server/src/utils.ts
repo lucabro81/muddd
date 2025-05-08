@@ -23,7 +23,7 @@ export const server = fastify({
   },
 });
 
-const clientConnections = new Map<string, { connection: WebSocket, playerId: EntityId }>();
+const clientConnections = new Map<string, { connection: WebSocket, playerId: EntityId, connectionId: string }>();
 
 export async function buildServer(worldState: WorldType | null): Promise<FastifyInstance> {
   if (!worldState) {
