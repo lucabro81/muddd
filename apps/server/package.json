@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "node --env-file .env dist/server.js",
-    "dev": "nodemon --exec \"node --loader ts-node/esm --require tsconfig-paths/register src/server.ts\"",
+    "dev": "nodemon --exec \"node --env-file .env --loader ts-node/esm --require tsconfig-paths/register src/server.ts\"",
     "build": "rimraf ./dist && tsc",
     "test": "vitest run",
     "test:watch": "vitest"

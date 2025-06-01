@@ -9,6 +9,10 @@ import {
   RoomConnectionsComponent,
   InventoryComponent,
   IsPresentInRoomComponent,
+  IsPickupableComponent,
+  ButtonStateComponent,
+  BUTTON_STATE_COMPONENT_TYPE,
+  PICKUPABLE_COMPONENT_TYPE,
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -133,9 +137,6 @@ export async function generateRoomDescription(
 
   Ricorda: non puoi inventare nulla. Devi includere tutti gli oggetti visibili e tutte le uscite visibili.`;
 
-  console.log(`[DescEngine] Built prompt (length ${prompt.length}):\n--- PROMPT START ---\n${prompt}\n--- PROMPT END ---`);
-
-
   // --- 3. Call the LLM Provider ---
   try {
     const generatedDescription = provider.generateText(prompt, llmModel);
@@ -143,6 +144,106 @@ export async function generateRoomDescription(
   } catch (error) {
     async function* errorStream() {
       yield `${roomDesc?.name || 'Luogo indefinito'}\n[Errore LLM nell'avvio dello stream]`;
+    }
+    return errorStream();
+  }
+}
+
+/**
+* Genera la descrizione dettagliata di una specifica entità (oggetto, creatura)
+* usando un LLMProvider in streaming.
+*
+* @param provider L'istanza del provider LLM da usare.
+* @param worldState Lo stato attuale del mondo.
+* @param targetEntityId L'ID dell'entità da descrivere.
+* @param viewerId L'ID dell'entità che sta guardando (per futuro contesto).
+* @param llmModel Il nome del modello LLM da usare.
+* @returns Una Promise che risolve con un AsyncIterable<string> che produce
+* i chunk della descrizione generata.
+*/
+export async function generateEntityDescriptionStream(
+  provider: LLMProvider,
+  worldState: WorldType,
+  targetEntityId: EntityId,
+  viewerId: EntityId, // Per ora non usato attivamente, ma utile per futuro
+  llmModel: string = 'llama3'
+): Promise<AsyncIterable<string>> {
+
+
+  // --- 1. Raccogli Contesto dell'Entità Target ---
+  const targetDesc = getComponent<DescriptionComponent>(worldState, targetEntityId, DESCRIPTION_COMPONENT_TYPE);
+
+  if (!targetDesc) {
+    console.error(`[DescEngine] Entity ${targetEntityId} has no DescriptionComponent! Cannot describe.`);
+    async function* errorStream() {
+      yield `Non riesci a distinguere bene cosa sia (ID: ${targetEntityId}).`;
+    }
+    return errorStream();
+  }
+
+  let contextDetails: string[] = [];
+  contextDetails.push(`Nome: ${targetDesc.name}`);
+  contextDetails.push(`Descrizione Base: ${targetDesc.text}`);
+  if (targetDesc.keywords && targetDesc.keywords.length > 0) {
+    contextDetails.push(`Parole Chiave: ${targetDesc.keywords.join(', ')}`);
+  }
+
+  // Aggiungi dettagli da altri componenti rilevanti
+  const isPickupable = getComponent<IsPickupableComponent>(worldState, targetEntityId, PICKUPABLE_COMPONENT_TYPE);
+  if (isPickupable) {
+    contextDetails.push("Proprietà: È raccoglibile.");
+  }
+
+  const buttonState = getComponent<ButtonStateComponent>(worldState, targetEntityId, BUTTON_STATE_COMPONENT_TYPE);
+  if (buttonState) {
+    contextDetails.push(`Stato Bottone: ${buttonState.isPushed ? 'Premuto' : 'Non premuto'}.`);
+  }
+
+  const inventory = getComponent<InventoryComponent>(worldState, targetEntityId, INVENTORY_COMPONENT_TYPE);
+  if (inventory && inventory.items.length > 0) {
+    const itemNames = inventory.items
+      .map(itemId => getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE)?.name)
+      .filter((name): name is string => !!name);
+    if (itemNames.length > 0) {
+      contextDetails.push(`Contiene (visibile): ${itemNames.join(', ')}.`);
+    } else {
+      contextDetails.push("Contenuto: Sembra vuoto o non riesci a vederne il contenuto.");
+    }
+  } else if (inventory) { // Esiste il componente inventario ma è vuoto
+    contextDetails.push("Contenuto: È vuoto.");
+  }
+
+  // TODO: Aggiungere logica per altri componenti (Health, Stats, Material, Condition, Effetti visibili, ecc.)
+  // quando verranno definiti e popolati nel world.json o dinamicamente.
+
+  // --- 2. Costruisci il Prompt ---
+  // Simile al prompt per la stanza, ma focalizzato sull'entità
+  const prompt = `Sei un narratore fantasy per un MUD testuale. 
+  Il tuo compito è generare la descrizione di una stanza **in seconda persona**, come se parlassi direttamente al giocatore.
+  Scrivi in tono conciso ma evocativo, senza diventare piatto.
+  ⚠️ Non stai creando narrativa, stai descrivendo **ciò che si vede**. Il tuo stile può evocare atmosfera, ma **non deve mai aggiungere nulla che non sia presente nei dati forniti**.
+  ❌ Non inventare MAI oggetti, dettagli architettonici, suoni, odori, luci, creature o passaggi non esplicitamente indicati nei dati.
+    
+  --- Istruzioni Output ---
+  1. Inizia la descrizione con "Osservi attentamente..." o una frase simile.
+  2. Integra tutti i dettagli forniti (Descrizione Base, Parole Chiave se rilevanti, Proprietà, Stato) in una descrizione fluida.
+  3. Cita il contenuto se è presente un 'interno' e questo è accessibile ed è noto il modo con cui potervi accedere.
+  
+  Rispondi **solo** con la descrizione richiesta, in prosa coerente.
+  
+  ### Dati Entità Esaminata
+  ${contextDetails.map(detail => `• ${detail}`).join('\n')}
+  
+  Ricorda: non puoi inventare nulla, ma solo descrivere in base a quanto è stato fornito.`;
+
+  // --- 3. Call the LLM Provider ---
+  try {
+    const descriptionStream = provider.generateText(prompt, llmModel);
+    return descriptionStream;
+  } catch (error) {
+    console.error(`[DescEngine] Error initiating entity description stream for ${targetEntityId}:`, error);
+    async function* errorStream() {
+      yield `${targetDesc?.name || 'Oggetto indefinito'}\n[Errore LLM nell'avvio dello stream per la descrizione dettagliata]`;
     }
     return errorStream();
   }

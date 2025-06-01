@@ -4,6 +4,8 @@ import { EntityId, RoomId, Timestamp } from '../common/types.js';
 export enum EventType {
   PLAYER_COMMAND = 'PlayerCommand',
   ENTITY_MOVE = 'EntityMove',
+  LOOK_TARGET = 'LookTarget',
+  ITEM_GET = 'ItemGet',
 }
 
 export interface BaseEvent {
@@ -28,4 +30,17 @@ export interface PlayerCommandEvent extends BaseEvent {
   argString?: string;
 }
 
-export type GameEvent = EntityMoveEvent | PlayerCommandEvent;
+export interface LookTargetEvent extends BaseEvent {
+  type: EventType.LOOK_TARGET;
+  actorId: EntityId;
+  targetEntityId: EntityId;
+}
+
+export interface ItemGetEvent extends BaseEvent {
+  type: EventType.ITEM_GET;
+  actorId: EntityId;
+  itemId: EntityId;
+  roomId: RoomId;
+}
+
+export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent;

@@ -7,6 +7,8 @@ export const INVENTORY_COMPONENT_TYPE = 'inventory';
 export const PICKUPABLE_COMPONENT_TYPE = 'pickupable';
 export const BUTTON_STATE_COMPONENT_TYPE = 'buttonState';
 export const PLAYER_COMPONENT_TYPE = 'player';
+export const ROOM_COMPONENT_TYPE = 'room';
+export const ITEM_COMPONENT_TYPE = 'item';
 
 export type ComponentType =
   typeof DESCRIPTION_COMPONENT_TYPE |
@@ -15,7 +17,9 @@ export type ComponentType =
   typeof INVENTORY_COMPONENT_TYPE |
   typeof PICKUPABLE_COMPONENT_TYPE |
   typeof BUTTON_STATE_COMPONENT_TYPE |
-  typeof PLAYER_COMPONENT_TYPE;
+  typeof PLAYER_COMPONENT_TYPE |
+  typeof ROOM_COMPONENT_TYPE |
+  typeof ITEM_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 
@@ -32,3 +36,5 @@ export interface InventoryComponent extends IComponent { type: typeof INVENTORY_
 export interface IsPickupableComponent extends IComponent { type: typeof PICKUPABLE_COMPONENT_TYPE; }
 export interface ButtonStateComponent extends IComponent { type: typeof BUTTON_STATE_COMPONENT_TYPE; isPushed: boolean; }
 export interface PlayerComponent extends IComponent { type: typeof PLAYER_COMPONENT_TYPE; clientId: string; }
+export interface IsRoomComponent extends IComponent { type: typeof ROOM_COMPONENT_TYPE; }
+export interface IsItemComponent extends IComponent { type: typeof ITEM_COMPONENT_TYPE; }

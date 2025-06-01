@@ -1,5 +1,5 @@
 {
-  "name": "MUDDD",
+  "name": "muddd",
   "private": true,
   "scripts": {
     "build": "turbo run build",

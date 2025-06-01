@@ -1,6 +1,6 @@
 import { server } from "./utils.js";
 import { type WebSocket } from "@fastify/websocket";
-import { type WorldType, gameEventEmitter, type GameEvent, applyEvent, EventType, EntityMoveEvent, EntityId, generateRoomDescription, OllamaProvider } from "core/main.js"
+import { type WorldType, gameEventEmitter, type GameEvent, applyEvent, EventType, EntityMoveEvent, LookTargetEvent, EntityId, generateRoomDescription, generateEntityDescriptionStream, OllamaProvider } from "core/main.js"
 
 const ollamaBaseUrl = process.env.OLLAMA_BASE_URL
 const llmModel = process.env.OLLAMA_MODEL;
@@ -34,55 +34,142 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     }
 
     // If the event that just modified the state was a player movement...
-    if (event.type === EventType.ENTITY_MOVE) {
-      const moveEvent = event as EntityMoveEvent;
-      const playerId = moveEvent.entityId;
-      const destinationRoomId = moveEvent.destinationRoomId;
+    // if (event.type === EventType.ENTITY_MOVE) {
+    //   const moveEvent = event as EntityMoveEvent;
+    //   const playerId = moveEvent.entityId;
+    //   const destinationRoomId = moveEvent.destinationRoomId;
 
-      // Find the websocket connection for this player
-      // (We might need to iterate the values of clientConnections if the key is req.id)
-      let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
-      for (const data of clientConnections.values()) {
-        if (data.playerId === playerId) {
-          clientData = data;
-          break;
-        }
+    //   // Find the websocket connection for this player
+    //   // (We might need to iterate the values of clientConnections if the key is req.id)
+    //   let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
+    //   for (const data of clientConnections.values()) {
+    //     if (data.playerId === playerId) {
+    //       clientData = data;
+    //       break;
+    //     }
+    //   }
+
+    //   // TBD: is worldState check needed?
+    //   if (clientData && worldState) { // Ensure the client is still connected and the state exists
+    //     server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Generating description...`);
+    //     try {
+    //       // 1. Get the async iterable from the engine
+    //       const descriptionStream = await generateRoomDescription(
+    //         llmProvider,
+    //         worldState,
+    //         destinationRoomId,
+    //         playerId,
+    //         llmModel
+    //       );
+
+    //       if (!clientConnections.has(clientData.connectionId)) {
+    //         server.log.warn(`Client ${playerId} disconnected while streaming description.`);
+    //         return;
+    //       }
+
+    //       // Send an initial newline for visual separation in the client
+    //       clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+
+    //       // 2. Iterate on the stream and send the chunks to the client
+    //       for await (const chunk of descriptionStream) {
+    //         clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
+    //       }
+
+    //       // Add a final newline for separation from the next input/output
+    //       clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+
+    //       server.log.info(`Finished streaming description to ${playerId}.`);
+
+    //     } catch (descriptionError) {
+    //       server.log.error({ err: descriptionError, roomId: destinationRoomId }, "Failed to generate or send room description");
+    //       clientData.connection.send("\n[An error occurred while describing this place.]\n"); // Fallback message
+    //     }
+    //   }
+    // }
+  });
+
+  gameEventEmitter.on<EntityMoveEvent>(EventType.ENTITY_MOVE, async (event: EntityMoveEvent) => {
+    const playerId = event.entityId;
+    const destinationRoomId = event.destinationRoomId;
+
+    // Find the websocket connection for this player
+    // (We might need to iterate the values of clientConnections if the key is req.id)
+    let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === playerId) {
+        clientData = data;
+        break;
       }
+    }
 
-      // TBD: is worldState check needed?
-      if (clientData && worldState) { // Ensure the client is still connected and the state exists
-        server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Generating description...`);
-        try {
-          // 1. Get the async iterable from the engine
-          const descriptionStream = await generateRoomDescription(
-            llmProvider,
-            worldState,
-            destinationRoomId,
-            playerId,
-            llmModel
-          );
+    // TBD: is worldState check needed?
+    if (clientData && worldState) { // Ensure the client is still connected and the state exists
+      server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Generating description...`);
+      try {
+        // 1. Get the async iterable from the engine
+        const descriptionStream = await generateRoomDescription(
+          llmProvider,
+          worldState,
+          destinationRoomId,
+          playerId,
+          llmModel
+        );
 
-          if (!clientConnections.has(clientData.connectionId)) {
-            server.log.warn(`Client ${playerId} disconnected while streaming description.`);
-            return;
-          }
+        if (!clientConnections.has(clientData.connectionId)) {
+          server.log.warn(`Client ${playerId} disconnected while streaming description.`);
+          return;
+        }
 
-          // Send an initial newline for visual separation in the client
-          clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+        // Send an initial newline for visual separation in the client
+        clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
 
-          // 2. Iterate on the stream and send the chunks to the client
-          for await (const chunk of descriptionStream) {
+        // 2. Iterate on the stream and send the chunks to the client
+        for await (const chunk of descriptionStream) {
+          clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
+        }
+
+        // Add a final newline for separation from the next input/output
+        clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
+
+        server.log.info(`Finished streaming description to ${playerId}.`);
+
+      } catch (descriptionError) {
+        server.log.error({ err: descriptionError, roomId: destinationRoomId }, "Failed to generate or send room description");
+        clientData.connection.send("\n[An error occurred while describing this place.]\n"); // Fallback message
+      }
+    }
+  });
+
+  gameEventEmitter.on<LookTargetEvent>(EventType.LOOK_TARGET, async (event) => {
+    const { actorId, targetEntityId } = event;
+    let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+    if (clientData && worldState) {
+      server.log.info(`Player ${actorId} is looking at ${targetEntityId}. Generating description stream...`);
+      try {
+        const descriptionStream = await generateEntityDescriptionStream(
+          llmProvider, worldState, targetEntityId, actorId, llmModel
+        );
+        // Invia lo stream al client come abbiamo fatto per la descrizione della stanza
+        clientData.connection.send('\n'); // Separatore
+        for await (const chunk of descriptionStream) {
+          if (clientConnections.has(clientData.connectionId)) { // Usa la chiave corretta qui! es: clientData.clientId o req.id
             clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
-          }
-
-          // Add a final newline for separation from the next input/output
+          } else { break; }
+        }
+        if (clientConnections.has(clientData.connectionId)) {
           clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
-
-          server.log.info(`Finished streaming description to ${playerId}.`);
-
-        } catch (descriptionError) {
-          server.log.error({ err: descriptionError, roomId: destinationRoomId }, "Failed to generate or send room description");
-          clientData.connection.send("\n[An error occurred while describing this place.]\n"); // Fallback message
+        }
+        server.log.info(`Finished streaming entity description to ${actorId}.`);
+      } catch (error) {
+        server.log.error({ err: error, target: targetEntityId }, "Failed to generate or send entity description");
+        if (clientConnections.has(clientData.connectionId)) {
+          clientData.connection.send(JSON.stringify({ type: 'error', payload: "\n[Errore nella descrizione dell'oggetto.]\n" }));
         }
       }
     }

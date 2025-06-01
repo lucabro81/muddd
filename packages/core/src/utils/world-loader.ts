@@ -1,7 +1,7 @@
 // packages/core/src/world-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorldType, EntityId, ComponentType, IComponent } from '../common/types.js';
+import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE } from '../common/types.js';
 
 // --- IMPORTA TUTTE LE TUE INTERFACCE COMPONENTE SPECIFICHE QUI ---
 // Assumendo che siano esportate da un file indice o direttamente
@@ -93,8 +93,14 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
     console.error(`Invalid data for PlayerComponent:`, data);
     return null;
   },
-  // Aggiungi qui le factory per *tutti* gli altri tipi di componente che definirai!
 
+  [ROOM_COMPONENT_TYPE]: (_data): IsRoomComponent => {
+    return { type: ROOM_COMPONENT_TYPE };
+  },
+
+  [ITEM_COMPONENT_TYPE]: (_data): IsItemComponent => {
+    return { type: ITEM_COMPONENT_TYPE };
+  },
 };
 
 // Funzione principale per caricare lo stato da una stringa JSON

@@ -1,0 +1,6 @@
+---
+description: add and manage events in the core library
+globs: 
+alwaysApply: false
+---
+in [events.types.ts](mdc:packages/core/src/events/events.types.ts) add the event type in the enum, the interface, and add to the union type the interface just created

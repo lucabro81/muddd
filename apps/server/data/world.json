@@ -18,6 +18,9 @@
         {
           "type": "inventory",
           "items": ["button_rusty"]
+        },
+        {
+          "type": "room"
         }
       ]
     },
@@ -39,6 +42,9 @@
         {
           "type": "inventory",
           "items": ["button_rusty"]
+        },
+        {
+          "type": "room"
         }
       ]
     },
@@ -68,6 +74,9 @@
         },
         {
           "type": "pickupable"
+        },
+        {
+          "type": "item"
         }
       ]
     }
