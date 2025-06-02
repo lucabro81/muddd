@@ -32,60 +32,6 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
 
       return;
     }
-
-    // If the event that just modified the state was a player movement...
-    // if (event.type === EventType.ENTITY_MOVE) {
-    //   const moveEvent = event as EntityMoveEvent;
-    //   const playerId = moveEvent.entityId;
-    //   const destinationRoomId = moveEvent.destinationRoomId;
-
-    //   // Find the websocket connection for this player
-    //   // (We might need to iterate the values of clientConnections if the key is req.id)
-    //   let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
-    //   for (const data of clientConnections.values()) {
-    //     if (data.playerId === playerId) {
-    //       clientData = data;
-    //       break;
-    //     }
-    //   }
-
-    //   // TBD: is worldState check needed?
-    //   if (clientData && worldState) { // Ensure the client is still connected and the state exists
-    //     server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Generating description...`);
-    //     try {
-    //       // 1. Get the async iterable from the engine
-    //       const descriptionStream = await generateRoomDescription(
-    //         llmProvider,
-    //         worldState,
-    //         destinationRoomId,
-    //         playerId,
-    //         llmModel
-    //       );
-
-    //       if (!clientConnections.has(clientData.connectionId)) {
-    //         server.log.warn(`Client ${playerId} disconnected while streaming description.`);
-    //         return;
-    //       }
-
-    //       // Send an initial newline for visual separation in the client
-    //       clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
-
-    //       // 2. Iterate on the stream and send the chunks to the client
-    //       for await (const chunk of descriptionStream) {
-    //         clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
-    //       }
-
-    //       // Add a final newline for separation from the next input/output
-    //       clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
-
-    //       server.log.info(`Finished streaming description to ${playerId}.`);
-
-    //     } catch (descriptionError) {
-    //       server.log.error({ err: descriptionError, roomId: destinationRoomId }, "Failed to generate or send room description");
-    //       clientData.connection.send("\n[An error occurred while describing this place.]\n"); // Fallback message
-    //     }
-    //   }
-    // }
   });
 
   gameEventEmitter.on<EntityMoveEvent>(EventType.ENTITY_MOVE, async (event: EntityMoveEvent) => {
