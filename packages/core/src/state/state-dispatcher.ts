@@ -1,6 +1,6 @@
 import { gameEventEmitter } from '../events/game-event-emitter.js';
 import { ComponentType, CONNECTIONS_COMPONENT_TYPE, EntityId, IComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, IsItemComponent, IsPresentInRoomComponent, ITEM_COMPONENT_TYPE, LOCATION_COMPONENT_TYPE, RoomConnectionsComponent, RoomId, WorldType } from '../common/types.js';
-import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent } from '../events/events.types.js';
+import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent, LookRoomEvent } from '../events/events.types.js';
 import { entityMoveReducer } from './state-reducers.js';
 import { v4 as uuidv4 } from 'uuid';
 import { findTargetEntity } from '../parser/target-resolver.js';
@@ -56,8 +56,56 @@ function isAMovingVerb(verb: string): boolean {
   return moveVerbs.includes(verb);
 }
 
+function isALookingVerb(verb: string): boolean {
+  console.log(`[isALookingVerb] Checking if '${verb}' is a looking verb.`, lookVerbs.includes(verb));
+  return lookVerbs.includes(verb);
+}
+
 function isThereAValidDirection(args: string[]): boolean {
   return args.length > 0 && directionAliases[args[0]] !== undefined;
+}
+
+function fireLookTargetEvent(actorId: EntityId, targetEntityId: EntityId) {
+  const lookEvent: LookTargetEvent = {
+    id: uuidv4(),
+    type: EventType.LOOK_TARGET,
+    timestamp: Date.now(),
+    actorId: actorId,
+    targetEntityId: targetEntityId
+  };
+  console.log(`[applyEvent] Emitting LookTargetEvent for ${actorId} -> ${targetEntityId}`);
+  gameEventEmitter.emit(EventType.LOOK_TARGET, lookEvent);
+}
+
+function fireLookRoomEvent(currentState: WorldType, actorId: EntityId) {
+  const currentRoomId = getLocationId(currentState, actorId);
+  if (currentRoomId) {
+    const lookRoomEvent: LookRoomEvent = {
+      id: uuidv4(),
+      type: EventType.LOOK_ROOM,
+      timestamp: Date.now(),
+      actorId: actorId,
+      roomId: currentRoomId,
+    };
+    console.log(`[fireLookRoomEvent] Emitting LookRoomEvent for player ${actorId} in room ${currentRoomId}`);
+    gameEventEmitter.emit(EventType.LOOK_ROOM, lookRoomEvent);
+  } else {
+    console.error(`[fireLookRoomEvent] Could not determine room for actor ${actorId} to emit LookRoomEvent.`);
+    // Potentially emit a command failure event here or send feedback
+  }
+}
+
+function fireEntityMoveEvent(entityId: EntityId, originRoomId: RoomId, destinationRoomId: RoomId) {
+  const moveEvent: EntityMoveEvent = {
+    id: uuidv4(),
+    type: EventType.ENTITY_MOVE,
+    timestamp: Date.now(),
+    entityId: entityId,
+    originRoomId: originRoomId,
+    destinationRoomId: destinationRoomId,
+  };
+  console.log(`[fireEntityMoveEvent] Emitting EntityMoveEvent for player ${entityId} from ${originRoomId} to ${destinationRoomId}`);
+  gameEventEmitter.emit(EventType.ENTITY_MOVE, moveEvent);
 }
 
 function getLocationId(currentState: WorldType, actorId: EntityId): RoomId | undefined {
@@ -68,6 +116,17 @@ function getLocationId(currentState: WorldType, actorId: EntityId): RoomId | und
     return undefined;
   }
   return locationComponent.roomId;
+}
+
+function getItemsCandidateIds(itemIds: EntityId[], roomId: RoomId, actorId: EntityId, currentState: WorldType): EntityId[] {
+  return itemIds.filter(entityId => {
+    console.log(`[applyEvent] Checking entity ${entityId} in room ${roomId} against actor ${actorId}`, getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE));
+    if (getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE)) {
+      const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
+      return loc?.roomId === roomId;
+    }
+    return false;
+  });
 }
 
 /**
@@ -105,13 +164,12 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       }
 
 
-      if (lookVerbs.includes(verb)) {
+      if (isALookingVerb(verb)) {
         console.log(`[applyEvent] Look command '${verb}' received.`);
         if (!argString) {
           // If the verb is "look" and there is no argString, we want to describe the room
-          // TODO: Emit a LookRoomEvent? Or handle here? For now, ignore.
-          console.log(`[applyEvent] Command '${verb}' received without target.`);
-          return currentState; // No state changes / no specific event
+          fireLookRoomEvent(currentState, actorId);
+          return currentState; // No direct state change from PlayerCommand for looking at room
         }
         // --- Risoluzione Target ---
         console.log(`[applyEvent] Attempting to resolve target '${argString}' for actor ${actorId}`);
@@ -130,17 +188,16 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
 
         console.log(`[applyEvent] currentState.keys(): ${Array.from(currentState.keys()).join(', ')}`);
 
-        // Add other players/NPCs in the room (exclude the actor itself)
-        const candidateIds: EntityId[] = [];
-        itemIds.forEach(entityId => {
-          console.log(`[applyEvent] Checking entity ${entityId} in room ${roomId} against actor ${actorId}`, getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE));
-          if (getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE)) {
-            const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
-            if (loc?.roomId === roomId) {
-              candidateIds.push(entityId);
-            }
-          }
-        });
+        const candidateIds: EntityId[] = getItemsCandidateIds(itemIds, roomId, actorId, currentState);
+        // itemIds.forEach(entityId => {
+        //   console.log(`[applyEvent] Checking entity ${entityId} in room ${roomId} against actor ${actorId}`, getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE));
+        //   if (getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE)) {
+        //     const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
+        //     if (loc?.roomId === roomId) {
+        //       candidateIds.push(entityId);
+        //     }
+        //   }
+        // });
 
         // 3. Implementa la logica di matching (funzione helper?)
         // This function compares argString with name/keywords of the candidates
@@ -151,16 +208,7 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             console.log(`[applyEvent] Target '${argString}' is ambiguous for ${actorId}.`);
             // TODO: Emit CommandFailed event or send feedback "Which one?"
           } else {
-            // Target found! Emit LookTargetEvent
-            const lookEvent: LookTargetEvent = {
-              id: uuidv4(),
-              type: EventType.LOOK_TARGET,
-              timestamp: Date.now(),
-              actorId: actorId,
-              targetEntityId: targetEntityId
-            };
-            console.log(`[applyEvent] Emitting LookTargetEvent for ${actorId} -> ${targetEntityId}`);
-            gameEventEmitter.emit(EventType.LOOK_TARGET, lookEvent);
+            fireLookTargetEvent(actorId, targetEntityId);
           }
         } else {
           console.log(`[applyEvent] Target '${argString}' not found for ${actorId} in ${roomId}.`);
@@ -200,16 +248,7 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             //TODO: Simple for now: take the first valid destination
             const destinationRoomId = possibleDestinations[0];
 
-            const moveEvent: EntityMoveEvent = {
-              id: uuidv4(),
-              type: EventType.ENTITY_MOVE,
-              timestamp: Date.now(),
-              entityId: actorId,
-              originRoomId: originRoomId,
-              destinationRoomId: destinationRoomId,
-            };
-            console.log(`[applyEvent] Emitting EntityMoveEvent for player ${actorId} to ${destinationRoomId}`);
-            gameEventEmitter.emit(EventType.ENTITY_MOVE, moveEvent);
+            fireEntityMoveEvent(actorId, originRoomId, destinationRoomId);
 
           }
           else {
@@ -217,7 +256,6 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             // TODO: Send feedback to the player "You can't go in that direction."
             return currentState; // No state changes
           }
-
 
         }
       }

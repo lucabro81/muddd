@@ -1,23 +1,26 @@
 {
   "entities": [
     {
-      "id": "room_entrance",
+      "id": "porta_dell_inferno",
       "components": [
         {
           "type": "description",
-          "name": "Ingresso della Caverna",
-          "keywords": ["caverna", "ingresso", "grotta", "entrata"],
-          "text": "Ti trovi all'ingresso buio e umido di una caverna. Le pareti rocciose gocciolano e l'aria odora di terra bagnata e muschio. Un debole spiffero proviene da nord."
+          "name": "Porta dell'Inferno",
+          "keywords": ["porta", "inferno", "soglia", "entrata", "architrave"],
+          "text": "Varchi una soglia monumentale sovrastata da un imponente architrave di pietra. Il passaggio verso nord è avvolto da un'oscurità impenetrabile che respinge ogni tentativo di attraversarlo."
         },
         {
           "type": "connections",
           "exits": {
-            "nord": ["room_inner_cave"]
+            "nord": ["antinferno"]
           }
         },
         {
           "type": "inventory",
-          "items": ["button_rusty"]
+          "items": [
+            "frammento_iscrizione_infernale",
+            "architrave_con_iscrizione"
+          ]
         },
         {
           "type": "room"
@@ -25,58 +28,159 @@
       ]
     },
     {
-      "id": "room_inner_cave",
+      "id": "architrave_con_iscrizione",
       "components": [
         {
           "type": "description",
-          "name": "Interno della Caverna",
-          "keywords": ["caverna", "interno", "grotta"],
-          "text": "Sei più all'interno della caverna. È ancora più buio qui, riesci a malapena a distinguere le forme. Senti l'eco dei tuoi passi. L'unica uscita evidente è a sud."
-        },
-        {
-          "type": "connections",
-          "exits": {
-            "sud": ["room_entrance"]
-          }
-        },
-        {
-          "type": "inventory",
-          "items": ["button_rusty"]
-        },
-        {
-          "type": "room"
-        }
-      ]
-    },
-    {
-      "id": "button_rusty",
-      "components": [
-        {
-          "type": "description",
-          "name": "Bottone Arrugginito su Piastra",
-          "keywords": [
-            "bottone",
-            "pulsante",
-            "arrugginito",
-            "ruggine",
-            "piastra",
-            "cavo"
-          ],
-          "text": "Un pulsante di metallo arrugginito è fissato al centro di una robusta piastra metallica ancorata al pavimento. Dalla piastra parte un spesso cavo nero e fibroso che si perde nell'ombra vicina."
+          "name": "Architrave con Iscrizione Danneggiata",
+          "keywords": ["architrave", "iscrizione", "incavo", "pietra"],
+          "text": "Un massiccio architrave di pietra sovrasta il varco. Lungo la sua superficie corre un'antica iscrizione, ma una sezione è chiaramente mancante, lasciando un profondo incavo dalla forma irregolare. Le lettere circostanti sono consumate dal tempo.",
+          "briefDescription": "un imponente architrave di pietra con un'iscrizione visibilmente danneggiata"
         },
         {
           "type": "location",
-          "roomId": "room_entrance"
+          "roomId": "porta_dell_inferno"
         },
         {
-          "type": "buttonState",
-          "isPushed": false
+          "type": "socket",
+          "acceptsItemId": "frammento_iscrizione_infernale",
+          "isOccupied": false,
+          "unlocksGateEntityId": "porta_dell_inferno",
+          "unlocksDirectionOnGate": "nord",
+          "socketDescriptionWhenEmpty": "L'incavo nell'iscrizione è vuoto, in attesa.",
+          "socketDescriptionWhenFilled": "Il frammento di pietra è incastrato perfettamente nell'incavo, completando l'iscrizione: \"Per me si va ne la città dolente, per me si va ne l'etterno dolore, per me si va tra la perduta gente. Giustizia mosse il mio alto fattore: fecemi la divina podestate, la somma sapienza e 'l primo amore. Dinanzi a me non fuor cose create se non etterne, e io etterno duro. Lasciate ogne speranza, voi ch'intrate\""
+        },
+        {
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": "frammento_iscrizione_infernale",
+      "components": [
+        {
+          "type": "description",
+          "name": "Frammento d'Iscrizione Infernale",
+          "keywords": [
+            "frammento",
+            "iscrizione",
+            "pietra",
+            "speranza",
+            "scheggia"
+          ],
+          "text": "Una scheggia di pietra scura, fredda al tatto. La sua forma irregolare e i bordi scheggiati suggeriscono che si sia staccata da un incavo più grande. Incise sulla sua superficie consumata ci sono lettere che formano chiaramente la parola 'SPERANZA'.",
+          "briefDescription": "una piccola e scura scheggia di pietra con delle lettere incise, seminascosta dalla polvere"
+        },
+        {
+          "type": "location",
+          "roomId": "porta_dell_inferno"
         },
         {
           "type": "pickupable"
         },
         {
+          "type": "visibility",
+          "level": 1
+        },
+        {
           "type": "item"
+        }
+      ]
+    },
+    {
+      "id": "antinferno",
+      "components": [
+        {
+          "type": "description",
+          "name": "Antinferno - La Terra degli Ignari",
+          "keywords": [
+            "antinferno",
+            "ignavi",
+            "pusillanimi",
+            "neutri",
+            "vespe",
+            "polvere"
+          ],
+          "text": "Ti trovi in una landa grigia e desolata, spazzata da un vento incessante che solleva nugoli di polvere. Un lamento continuo e indistinto si leva da anime che corrono senza sosta, inseguite da vespe e mosconi. Non appartengono né al bene né al male, i pusillanimi che vissero senza infamia e senza lode."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "nord": ["riva_acheronte"],
+            "sud": ["porta_dell_inferno"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        },
+        {
+          "type": "room"
+        }
+      ]
+    },
+    {
+      "id": "riva_acheronte",
+      "components": [
+        {
+          "type": "description",
+          "name": "Riva dell'Acheronte - Il Fiume del Dolore",
+          "keywords": [
+            "acheronte",
+            "fiume",
+            "riva",
+            "caronte",
+            "anime",
+            "barca",
+            "nebbia"
+          ],
+          "text": "Giungi sulla sponda melmosa di un vasto fiume nero, l'Acheronte. Le sue acque lente e oleose emanano un fetore di palude e disperazione. Sulla riva opposta, una nebbia oscura cela ogni visuale, e da essa provengono lamenti strazianti. Una folla di anime nude e tremanti si accalca sulla riva, contendendosi un posto su una barca scura condotta da una figura minacciosa."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "nord": ["limbo_primo_cerchio"],
+            "sud": ["antinferno"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        },
+        {
+          "type": "room"
+        }
+      ]
+    },
+    {
+      "id": "limbo_primo_cerchio",
+      "components": [
+        {
+          "type": "description",
+          "name": "Limbo - Primo Cerchio",
+          "keywords": [
+            "limbo",
+            "primo cerchio",
+            "nobile castello",
+            "spiriti virtuosi",
+            "pagani",
+            "bambini non battezzati",
+            "sette mura"
+          ],
+          "text": "Attraversato il fiume oscuro, approdi in un luogo sorprendentemente sereno, seppur privo di gioia. Ti trovi all'interno del Primo Cerchio, il Limbo. Davanti a te si erge il Nobile Castello, circondato da sette mura e sette porte, dimora dei grandi spiriti virtuosi del passato pagano e dei bambini non battezzati. Un prato di fresca verdura si estende intorno, illuminato da una luce propria, separata dalle tenebre infernali."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "sud": ["riva_acheronte"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        },
+        {
+          "type": "room"
         }
       ]
     }

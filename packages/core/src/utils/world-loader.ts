@@ -1,7 +1,7 @@
 // packages/core/src/world-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE } from '../common/types.js';
+import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE, VISIBLE_COMPONENT_TYPE, IsVisibleComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel } from '../common/types.js';
 
 // --- IMPORTA TUTTE LE TUE INTERFACCE COMPONENTE SPECIFICHE QUI ---
 // Assumendo che siano esportate da un file indice o direttamente
@@ -39,7 +39,7 @@ type ComponentFactory = (data: any) => IComponent | null;
 const componentRegistry: Record<ComponentType, ComponentFactory> = {
 
   [DESCRIPTION_COMPONENT_TYPE]: (data): DescriptionComponent | null => {
-    if (typeof data.name === 'string' && Array.isArray(data.keywords) && typeof data.text === 'string') {
+    if (typeof data.name === 'string' && Array.isArray(data.keywords) && typeof data.text === 'string' && typeof data.briefDescription === 'string') {
       return {
         ...data,
         type: DESCRIPTION_COMPONENT_TYPE,
@@ -100,6 +100,22 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
 
   [ITEM_COMPONENT_TYPE]: (_data): IsItemComponent => {
     return { type: ITEM_COMPONENT_TYPE };
+  },
+
+  [VISIBLE_COMPONENT_TYPE]: (data): IsVisibleComponent | null => {
+    if (data.level === undefined || (typeof data.level === 'number' && [0, 1, 2].includes(data.level))) {
+      return { type: VISIBLE_COMPONENT_TYPE, level: data.level as VisibilityLevel | undefined };
+    }
+    console.error(`Invalid data for IsVisibleComponent: level must be 0, 1, or 2. Received:`, data.level);
+    return null;
+  },
+
+  [PERCEPTION_COMPONENT_TYPE]: (data): PerceptionComponent | null => {
+    if (typeof data.sightLevel === 'number' && (data.sightLevel === 0 || data.sightLevel === 1 || data.sightLevel === 2)) { // Assuming VisibilityLevel values
+      return { type: PERCEPTION_COMPONENT_TYPE, sightLevel: data.sightLevel as VisibilityLevel };
+    }
+    console.error(`Invalid data for PerceptionComponent:`, data);
+    return null;
   },
 };
 

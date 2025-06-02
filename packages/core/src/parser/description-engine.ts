@@ -13,6 +13,11 @@ import {
   ButtonStateComponent,
   BUTTON_STATE_COMPONENT_TYPE,
   PICKUPABLE_COMPONENT_TYPE,
+  PerceptionComponent,
+  PERCEPTION_COMPONENT_TYPE,
+  VisibilityLevel,
+  IsVisibleComponent,
+  VISIBLE_COMPONENT_TYPE
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -37,6 +42,11 @@ export async function generateRoomDescription(
 
   console.log(`[DescEngine] Preparing stream for room ${roomId}, viewer ${viewerId}, model ${llmModel}`);
 
+  // --- 0. Get Viewer's Perception --- (New Step)
+  const viewerPerception = getComponent<PerceptionComponent>(worldState, viewerId, PERCEPTION_COMPONENT_TYPE);
+  const viewerSightLevel: VisibilityLevel = viewerPerception?.sightLevel ?? 0; // Default to 0 if no perception or sightLevel
+  console.log(`[DescEngine] Viewer ${viewerId} sight level: ${viewerSightLevel}`);
+
   // --- 1. Collect Context from the worldState ---
 
   const roomDesc = getComponent<DescriptionComponent>(worldState, roomId, DESCRIPTION_COMPONENT_TYPE);
@@ -51,21 +61,26 @@ export async function generateRoomDescription(
   const roomInventory = getComponent<InventoryComponent>(worldState, roomId, INVENTORY_COMPONENT_TYPE);
   let itemsString = 'Non vedi oggetti particolari.';
   if (roomInventory && roomInventory.items.length > 0) {
-    // const itemNames = roomInventory.items
-    //   .map(itemId => getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE)?.name)
-    //   .filter(name => !!name); // Filtra eventuali oggetti senza nome/descrizione
-    const items = roomInventory
-      .items
+    const visibleItems = roomInventory.items
       .map(itemId => {
-        const component = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
+        const itemDesc = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
+        const itemVisibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
+        const itemVisibilityLevel: VisibilityLevel = itemVisibility?.level ?? 0;
+
         return {
-          name: component?.name,
-          description: component?.text
-        }
-      });
-    if (items.length > 0) {
-      // itemsString = `Vedi qui: ${itemNames.join(', ')}.`;
-      const itemString = items.map((item, index) => `\t${index + 1}. Oggetto: ${item.name}\n\tDescrizione: ${item.description}`).join('\n');
+          id: itemId,
+          name: itemDesc?.name,
+          description: itemDesc?.text, // Full description for potential later use or detailed examination
+          briefDescription: itemDesc?.briefDescription, // The new brief description
+          visibilityLevel: itemVisibilityLevel
+        };
+      })
+      .filter(item => item.name && viewerSightLevel >= item.visibilityLevel); // Filter by name and visibility
+
+    if (visibleItems.length > 0) {
+      const itemString = visibleItems
+        .map((item, index) => `\t${index + 1}. Oggetto: ${item.name}\n\tDescrizione Breve: ${item.briefDescription || 'Non descritto brevemente.'}`)
+        .join('\n');
       itemsString = `\n${itemString}.`;
     }
   }
@@ -112,7 +127,7 @@ export async function generateRoomDescription(
 
   📏 Ogni descrizione deve:
   1. Restituire l'atmosfera secondo la "Descrizione Base".
-  2. Includere in modo naturale ogni oggetto che trovi nella sezione “Oggetti Visibili”.
+  2. Includere in modo naturale ogni oggetto che trovi nella sezione "Oggetti Visibili".
   3. Includere in modo naturale ogni entità presente nella stanza, se esistono.
   4. Terminare sempre includendo in modo naturale un riferimento chiaro alle uscite visibili.
   5. Non fare riferimento al punto di ingresso, a meno che non sia esplicitamente indicato, se indicato includilo in modo naturale nel testo della descirizone.

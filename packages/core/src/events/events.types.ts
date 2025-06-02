@@ -1,4 +1,3 @@
-// packages/core/src/events/events.types.ts
 import { EntityId, RoomId, Timestamp } from '../common/types.js';
 
 export enum EventType {
@@ -6,6 +5,7 @@ export enum EventType {
   ENTITY_MOVE = 'EntityMove',
   LOOK_TARGET = 'LookTarget',
   ITEM_GET = 'ItemGet',
+  LOOK_ROOM = 'LookRoom',
 }
 
 export interface BaseEvent {
@@ -43,4 +43,10 @@ export interface ItemGetEvent extends BaseEvent {
   roomId: RoomId;
 }
 
-export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent;
+export interface LookRoomEvent extends BaseEvent {
+  type: EventType.LOOK_ROOM;
+  actorId: EntityId;
+  roomId: RoomId;
+}
+
+export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent | LookRoomEvent;

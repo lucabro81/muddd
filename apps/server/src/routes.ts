@@ -1,9 +1,9 @@
 import { type WebSocket } from "@fastify/websocket";
 import { type FastifyInstance, type FastifyRequest } from "fastify";
-import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext, ComponentType, IComponent, DESCRIPTION_COMPONENT_TYPE, DescriptionComponent, IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, EntityId, INVENTORY_COMPONENT_TYPE, InventoryComponent } from "core/main.js"
+import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext, ComponentType, IComponent, DESCRIPTION_COMPONENT_TYPE, DescriptionComponent, IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, EntityId, INVENTORY_COMPONENT_TYPE, InventoryComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
-const STARTING_ROOM_ID: EntityId = 'room_entrance';
+const STARTING_ROOM_ID: EntityId = 'porta_dell_inferno';
 
 export function routes(server: FastifyInstance, worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId, connectionId: string }>) {
 
@@ -21,7 +21,7 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
 
   server.get('/ws', { websocket: true }, (connection: WebSocket, req: FastifyRequest) => {
     server.log.info('>>> Entered /ws handler');
-    const connectionId = req.id; // ID univoco per questa connessione WebSocket
+    const connectionId = req.id; // ID unique for this WebSocket connection
     server.log.info(`Client ${connectionId} connecting from ${req.ip}...`);
 
     if (!worldState) {
@@ -56,13 +56,19 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
     };
     playerComponents.set(INVENTORY_COMPONENT_TYPE, inventory);
 
+    const perception: PerceptionComponent = {
+      type: PERCEPTION_COMPONENT_TYPE,
+      sightLevel: 1, // Default sight level for new players
+    };
+    playerComponents.set(PERCEPTION_COMPONENT_TYPE, perception);
+
     worldState.set(playerId, playerComponents);
     server.log.info(`Added player entity ${playerId} to world state in room ${STARTING_ROOM_ID}. Total entities: ${worldState.size}`);
 
     clientConnections.set(connectionId, { connection: connection, playerId: playerId, connectionId: connectionId });
 
     connection.send(`Welcome ${description.name}! You are in ${STARTING_ROOM_ID}.`);
-    // TODO: Inviare la descrizione della stanza iniziale
+    // TODO: Send the initial room description
 
 
     // 1. Send a welcome message to the client when they connect
