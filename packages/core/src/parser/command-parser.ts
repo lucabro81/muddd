@@ -1,13 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
 import { EntityId } from '../common/types.js';
-import { EventType, PlayerCommandEvent } from '../events/events.types.js';
+import { EventType, GameEvent, PlayerCommandEvent, SearchCommandEvent } from '../events/events.types.js';
+
+// Define known verbs
+const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'examine', 'perquisisci', 'explore'];
 
 /* TBD: Add other context variables as needed */
 export interface CommandParserContext {
   actorId: EntityId;
 }
 
-export function parseCommand(rawInput: string, context: CommandParserContext): PlayerCommandEvent | null {
+export function parseCommand(rawInput: string, context: CommandParserContext): GameEvent | null {
   const trimmedInput = rawInput.trim();
   if (trimmedInput === '') {
     return null;
@@ -20,6 +23,21 @@ export function parseCommand(rawInput: string, context: CommandParserContext): P
   const args = words.slice(1);
   const argString = args.join(' ');
 
+  // Command-specific event generation
+  if (searchVerbs.includes(verb)) {
+    const searchEvent: SearchCommandEvent = {
+      id: uuidv4(),
+      type: EventType.SEARCH_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      // For now, search has no arguments and applies to the room
+      // so we will need to resolve the roomId in the event handler.
+    };
+    console.log('[parseCommand] Parsed as SearchCommandEvent:', searchEvent);
+    return searchEvent;
+  }
+
+  // Default to a generic PlayerCommandEvent
   const commandEvent: PlayerCommandEvent = {
     id: uuidv4(),
     type: EventType.PLAYER_COMMAND,

@@ -11,6 +11,7 @@ export const ROOM_COMPONENT_TYPE = 'room';
 export const ITEM_COMPONENT_TYPE = 'item';
 export const VISIBLE_COMPONENT_TYPE = 'visible';
 export const PERCEPTION_COMPONENT_TYPE = 'perception';
+export const KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE = 'knownHiddenItems';
 
 export type ComponentType =
   typeof DESCRIPTION_COMPONENT_TYPE |
@@ -23,7 +24,8 @@ export type ComponentType =
   typeof ROOM_COMPONENT_TYPE |
   typeof ITEM_COMPONENT_TYPE |
   typeof VISIBLE_COMPONENT_TYPE |
-  typeof PERCEPTION_COMPONENT_TYPE;
+  typeof PERCEPTION_COMPONENT_TYPE |
+  typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 export type VisibilityLevel = 0 | 1 | 2;
@@ -45,3 +47,4 @@ export interface IsRoomComponent extends IComponent { type: typeof ROOM_COMPONEN
 export interface IsItemComponent extends IComponent { type: typeof ITEM_COMPONENT_TYPE; }
 export interface IsVisibleComponent extends IComponent { type: typeof VISIBLE_COMPONENT_TYPE; level?: VisibilityLevel }
 export interface PerceptionComponent extends IComponent { type: typeof PERCEPTION_COMPONENT_TYPE; sightLevel: VisibilityLevel; }
+export interface KnownHiddenItemsComponent extends IComponent { type: typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE; itemIds: EntityId[]; }

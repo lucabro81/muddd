@@ -1,7 +1,7 @@
 import { gameEventEmitter } from '../events/game-event-emitter.js';
 import { ComponentType, CONNECTIONS_COMPONENT_TYPE, EntityId, IComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, IsItemComponent, IsPresentInRoomComponent, ITEM_COMPONENT_TYPE, LOCATION_COMPONENT_TYPE, RoomConnectionsComponent, RoomId, WorldType } from '../common/types.js';
-import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent, LookRoomEvent } from '../events/events.types.js';
-import { entityMoveReducer } from './state-reducers.js';
+import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent, LookRoomEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
+import { entityMoveReducer, playerDiscoveredItemReducer } from './state-reducers.js';
 import { v4 as uuidv4 } from 'uuid';
 import { findTargetEntity } from '../parser/target-resolver.js';
 
@@ -146,6 +146,8 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
   switch (event.type) {
     case EventType.ENTITY_MOVE:
       return entityMoveReducer(currentState, event);
+    case EventType.PLAYER_DISCOVERED_ITEM:
+      return playerDiscoveredItemReducer(currentState, event);
     case EventType.PLAYER_COMMAND:
       const verb = event.verb?.toLowerCase();
       const args = event.args || [];

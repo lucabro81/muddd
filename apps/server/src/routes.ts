@@ -99,7 +99,7 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
       if (parsedEvent) {
         gameEventEmitter.emit(parsedEvent.type, parsedEvent);
         server.log.info(`Emitted ${parsedEvent.type} for ${currentActorId}`);
-        connection.send(`Command parsed: verb='${parsedEvent.verb}'`); // Feedback aggiornato
+        connection.send(`Command parsed: verb='${parsedEvent.type}'`); // Feedback aggiornato
       } else {
         connection.send(`Could not parse empty input.`);
       }

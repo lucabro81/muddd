@@ -6,6 +6,8 @@ export enum EventType {
   LOOK_TARGET = 'LookTarget',
   ITEM_GET = 'ItemGet',
   LOOK_ROOM = 'LookRoom',
+  SEARCH_COMMAND = 'SearchCommand',
+  PLAYER_DISCOVERED_ITEM = 'PlayerDiscoveredItem',
 }
 
 export interface BaseEvent {
@@ -49,4 +51,15 @@ export interface LookRoomEvent extends BaseEvent {
   roomId: RoomId;
 }
 
-export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent | LookRoomEvent;
+export interface SearchCommandEvent extends BaseEvent {
+  type: EventType.SEARCH_COMMAND;
+  actorId: EntityId;
+}
+
+export interface PlayerDiscoveredItemEvent extends BaseEvent {
+  type: EventType.PLAYER_DISCOVERED_ITEM;
+  actorId: EntityId;
+  itemId: EntityId;
+}
+
+export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent | LookRoomEvent | SearchCommandEvent | PlayerDiscoveredItemEvent;

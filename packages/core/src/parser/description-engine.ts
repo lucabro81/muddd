@@ -17,7 +17,9 @@ import {
   PERCEPTION_COMPONENT_TYPE,
   VisibilityLevel,
   IsVisibleComponent,
-  VISIBLE_COMPONENT_TYPE
+  VISIBLE_COMPONENT_TYPE,
+  KnownHiddenItemsComponent,
+  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -44,10 +46,13 @@ export async function generateRoomDescription(
 
   // --- 0. Get Viewer's Perception --- (New Step)
   const viewerPerception = getComponent<PerceptionComponent>(worldState, viewerId, PERCEPTION_COMPONENT_TYPE);
-  const viewerSightLevel: VisibilityLevel = viewerPerception?.sightLevel ?? 0; // Default to 0 if no perception or sightLevel
-  console.log(`[DescEngine] Viewer ${viewerId} sight level: ${viewerSightLevel}`);
+  const viewerSightLevel: VisibilityLevel = viewerPerception?.sightLevel ?? 0;
+  const knownHiddenItems = getComponent<KnownHiddenItemsComponent>(worldState, viewerId, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE)?.itemIds || [];
+  console.log(`[DescEngine] Viewer ${viewerId} sight level: ${viewerSightLevel}, known items: ${knownHiddenItems.join(', ')}`);
 
   // --- 1. Collect Context from the worldState ---
+
+  console.log(`[DescEngine] WorldState: ${JSON.stringify(worldState)}`);
 
   const roomDesc = getComponent<DescriptionComponent>(worldState, roomId, DESCRIPTION_COMPONENT_TYPE);
   if (!roomDesc) {
@@ -75,11 +80,17 @@ export async function generateRoomDescription(
           visibilityLevel: itemVisibilityLevel
         };
       })
-      .filter(item => item.name && viewerSightLevel >= item.visibilityLevel); // Filter by name and visibility
+      .filter(item => {
+        if (!item.name) return false;
+        // Item is visible if its visibility level is low enough OR if the player already knows about it.
+        const isKnown = knownHiddenItems.includes(item.id);
+        const canBeSeen = viewerSightLevel >= item.visibilityLevel;
+        return canBeSeen || isKnown;
+      });
 
     if (visibleItems.length > 0) {
       const itemString = visibleItems
-        .map((item, index) => `\t${index + 1}. Oggetto: ${item.name}\n\tDescrizione Breve: ${item.briefDescription || 'Non descritto brevemente.'}`)
+        .map((item, index) => `\t${index + 1}. Oggetto: ${item.briefDescription || 'Non descritto brevemente.'}`)
         .join('\n');
       itemsString = `\n${itemString}.`;
     }

@@ -5,14 +5,27 @@ import {
   gameEventEmitter,
   type GameEvent,
   applyEvent,
-  EventType,
   EntityMoveEvent,
   LookTargetEvent,
-  LookRoomEvent,
   EntityId,
   generateRoomDescription,
   generateEntityDescriptionStream,
-  OllamaProvider
+  OllamaProvider,
+  getComponent,
+  IsPresentInRoomComponent,
+  LOCATION_COMPONENT_TYPE,
+  InventoryComponent,
+  INVENTORY_COMPONENT_TYPE,
+  IsVisibleComponent,
+  VISIBLE_COMPONENT_TYPE,
+  PerceptionComponent,
+  PERCEPTION_COMPONENT_TYPE,
+  VisibilityLevel,
+  DescriptionComponent,
+  DESCRIPTION_COMPONENT_TYPE,
+  EventType,
+  LookRoomEvent,
+  SearchCommandEvent
 } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
@@ -155,6 +168,78 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
           clientData.connection.send(JSON.stringify({ type: 'error', payload: "\n[An error occurred while describing this place.]\n" }));
         }
       }
+    }
+  });
+
+  gameEventEmitter.on<SearchCommandEvent>(EventType.SEARCH_COMMAND, async (event) => {
+    const { actorId } = event;
+    if (!worldState) return;
+
+    // 1. Find the player's connection
+    let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+    if (!clientData) {
+      server.log.warn(`[SearchCommand] Could not find client connection for actor ${actorId}`);
+      return;
+    }
+
+    // 2. Find the player's location and perception
+    const location = getComponent<IsPresentInRoomComponent>(worldState, actorId, LOCATION_COMPONENT_TYPE);
+    if (!location) {
+      clientData.connection.send(JSON.stringify({ type: 'error', payload: "Non ti trovi in nessun luogo, impossibile cercare." }));
+      return;
+    }
+    const roomId = location.roomId;
+    const perception = getComponent<PerceptionComponent>(worldState, actorId, PERCEPTION_COMPONENT_TYPE);
+    const sightLevel: VisibilityLevel = perception?.sightLevel ?? 0;
+
+    // 3. Get all items in the room's inventory
+    const roomInventory = getComponent<InventoryComponent>(worldState, roomId, INVENTORY_COMPONENT_TYPE);
+    if (!roomInventory || roomInventory.items.length === 0) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: "Cerchi attentamente, ma non trovi nulla di nuovo." }));
+      return;
+    }
+
+    // 4. Find "hidden" items (visibility level > 0) that the player can see
+    const foundItems = roomInventory.items
+      .map(itemId => {
+        if (!worldState) return null; // Satisfy type checker
+        const visibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
+        const visibilityLevel: VisibilityLevel = visibility?.level ?? 0;
+        return { itemId, visibilityLevel };
+      })
+      .filter((item): item is { itemId: EntityId; visibilityLevel: VisibilityLevel } =>
+        item !== null && item.visibilityLevel > 0 && sightLevel >= item.visibilityLevel
+      );
+
+    if (foundItems.length > 0) {
+      // Fire an event for each discovered item to update the player's state
+      foundItems.forEach(item => {
+        gameEventEmitter.emit(EventType.PLAYER_DISCOVERED_ITEM, {
+          id: uuidv4(),
+          type: EventType.PLAYER_DISCOVERED_ITEM,
+          timestamp: Date.now(),
+          actorId: actorId,
+          itemId: item.itemId,
+        });
+      });
+
+      const itemNames = foundItems
+        .map(item => {
+          if (!worldState) return null; // Satisfy type checker
+          return getComponent<DescriptionComponent>(worldState, item.itemId, DESCRIPTION_COMPONENT_TYPE)?.name
+        })
+        .filter((name): name is string => !!name);
+
+      const message = `Cerchi attentamente e trovi: ${itemNames.join(', ')}.`;
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: message }));
+    } else {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: "Cerchi attentamente, ma non trovi nulla di nuovo." }));
     }
   });
 }

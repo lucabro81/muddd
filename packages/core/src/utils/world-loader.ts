@@ -1,7 +1,7 @@
 // packages/core/src/world-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE, VISIBLE_COMPONENT_TYPE, IsVisibleComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel } from '../common/types.js';
+import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE, VISIBLE_COMPONENT_TYPE, IsVisibleComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE, KnownHiddenItemsComponent } from '../common/types.js';
 
 // --- IMPORTA TUTTE LE TUE INTERFACCE COMPONENTE SPECIFICHE QUI ---
 // Assumendo che siano esportate da un file indice o direttamente
@@ -31,15 +31,12 @@ interface WorldJson {
   entities: JsonEntity[];
 }
 
-// Tipo per le funzioni factory che creano componenti
 type ComponentFactory = (data: any) => IComponent | null;
 
-// --- REGISTRO DEI COMPONENTI: Mappa i tipi stringa a funzioni factory ---
-// !!! QUESTA È LA PARTE CHIAVE DA COMPLETARE !!!
 const componentRegistry: Record<ComponentType, ComponentFactory> = {
 
   [DESCRIPTION_COMPONENT_TYPE]: (data): DescriptionComponent | null => {
-    if (typeof data.name === 'string' && Array.isArray(data.keywords) && typeof data.text === 'string' && typeof data.briefDescription === 'string') {
+    if (typeof data.name === 'string' && Array.isArray(data.keywords) && typeof data.text === 'string') {
       return {
         ...data,
         type: DESCRIPTION_COMPONENT_TYPE,
@@ -117,6 +114,14 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
     console.error(`Invalid data for PerceptionComponent:`, data);
     return null;
   },
+
+  [KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE]: (data): KnownHiddenItemsComponent | null => {
+    if (Array.isArray(data.itemIds)) {
+      return { type: KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE, itemIds: data.itemIds };
+    }
+    console.error(`Invalid data for KnownHiddenItemsComponent:`, data);
+    return null;
+  },
 };
 
 // Funzione principale per caricare lo stato da una stringa JSON
@@ -192,6 +197,7 @@ export function loadWorldStateFromFile(filePath: string): WorldType {
       throw new Error(`File not found at ${resolvedPath}`);
     }
     const jsonContent = fs.readFileSync(resolvedPath, 'utf-8');
+    console.log(`JSON content: ${jsonContent}`);
     return loadWorldStateFromJson(jsonContent);
   } catch (error) {
     console.error(`Failed to load world state from file ${filePath}:`, error);
