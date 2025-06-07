@@ -25,7 +25,12 @@ import {
   DESCRIPTION_COMPONENT_TYPE,
   EventType,
   LookRoomEvent,
-  SearchCommandEvent
+  SearchCommandEvent,
+  PickupCommandEvent,
+  KnownHiddenItemsComponent,
+  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
+  IsPickupableComponent,
+  PICKUPABLE_COMPONENT_TYPE
 } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
@@ -256,6 +261,95 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     } else {
       clientData.connection.send(JSON.stringify({ type: 'text', payload: "Cerchi attentamente, ma non trovi nulla di nuovo." }));
     }
+  });
+
+  gameEventEmitter.on<PickupCommandEvent>(EventType.PICKUP_COMMAND, async (event) => {
+    const { actorId, targetKeywords } = event;
+    server.log.info(`[PickupCommand] Received for actor ${actorId} with keywords "${targetKeywords}"`);
+
+    if (!worldState) return;
+
+    // 1. Find player's connection
+    let clientData;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+    if (!clientData) {
+      server.log.warn(`[PickupCommand] Could not find client for actor ${actorId}`);
+      return;
+    }
+
+    // 2. Find player's location and perception to determine what they can see
+    const location = getComponent<IsPresentInRoomComponent>(worldState, actorId, LOCATION_COMPONENT_TYPE);
+    if (!location) {
+      // This should not happen for a player, but as a safeguard:
+      clientData.connection.send(JSON.stringify({ type: 'error', payload: "Non ti trovi in nessun luogo." }));
+      return;
+    }
+    const roomInventory = getComponent<InventoryComponent>(worldState, location.roomId, INVENTORY_COMPONENT_TYPE);
+    if (!roomInventory || roomInventory.items.length === 0) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: "Non vedi nulla da raccogliere qui." }));
+      return;
+    }
+
+    // 3. Find the target item in the room
+    // This is a simplified version of the "findEntityByKeywords" logic.
+    // It finds the first visible item in the room that matches the keywords.
+    const perception = getComponent<PerceptionComponent>(worldState, actorId, PERCEPTION_COMPONENT_TYPE);
+    const knownHiddenItems = getComponent<KnownHiddenItemsComponent>(worldState, actorId, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE);
+    const sightLevel = perception?.sightLevel ?? 0;
+    const knownItemIds = knownHiddenItems?.itemIds ?? [];
+    let targetItemId: EntityId | null = null;
+
+    const searchTerms = targetKeywords.toLowerCase().split(' ').filter(t => t);
+
+    for (const itemId of roomInventory.items) {
+      const visibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
+      const isVisible = (visibility?.level ?? 0) <= sightLevel || knownItemIds.includes(itemId);
+
+      if (isVisible) {
+        const description = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
+        if (description) {
+          const entityKeywords = description.keywords.map(k => k.toLowerCase());
+          const isMatch = searchTerms.every(term => entityKeywords.some(keyword => keyword.includes(term)));
+          if (isMatch) {
+            targetItemId = itemId;
+            break; // Found our item
+          }
+        }
+      }
+    }
+
+
+    // 4. Validate and fire state-changing event
+    if (!targetItemId) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non vedi "${targetKeywords}" qui.` }));
+      return;
+    }
+
+    const isPickupable = getComponent<IsPickupableComponent>(worldState, targetItemId, PICKUPABLE_COMPONENT_TYPE);
+    if (!isPickupable) {
+      const targetDescription = getComponent<DescriptionComponent>(worldState, targetItemId, DESCRIPTION_COMPONENT_TYPE);
+      const targetName = targetDescription?.name ?? "quell'oggetto";
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non puoi raccogliere ${targetName}.` }));
+      return;
+    }
+
+    // All checks passed, fire the event to change the state
+    gameEventEmitter.emit(EventType.ITEM_PICKED_UP, {
+      id: uuidv4(),
+      type: EventType.ITEM_PICKED_UP,
+      timestamp: Date.now(),
+      actorId: actorId,
+      itemId: targetItemId,
+    });
+
+    const targetDescription = getComponent<DescriptionComponent>(worldState, targetItemId, DESCRIPTION_COMPONENT_TYPE);
+    const targetName = targetDescription?.name ?? "l'oggetto";
+    clientData.connection.send(JSON.stringify({ type: 'text', payload: `Raccogli: ${targetName}.` }));
   });
 }
 

@@ -1,7 +1,15 @@
 // packages/core/src/state-reducers.ts
 
-import { IsPresentInRoomComponent, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE, KnownHiddenItemsComponent, LOCATION_COMPONENT_TYPE, WorldType } from '../common/types.js';
-import { EntityMoveEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
+import {
+  INVENTORY_COMPONENT_TYPE,
+  InventoryComponent,
+  IsPresentInRoomComponent,
+  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
+  KnownHiddenItemsComponent,
+  LOCATION_COMPONENT_TYPE,
+  WorldType
+} from '../common/types.js';
+import { EntityMoveEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
 import util from 'util';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
@@ -86,5 +94,68 @@ export function playerDiscoveredItemReducer(
   nextState.set(actorId, nextPlayerComponents);
 
   console.log(`[playerDiscoveredItemReducer] Player ${actorId} discovered item ${itemId}.`);
+  return nextState;
+}
+
+export function itemPickedUpReducer(
+  currentState: WorldType,
+  event: ItemPickedUpEvent
+): WorldType {
+  const { actorId, itemId } = event;
+  console.log(`[itemPickedUpReducer] Processing event for actor ${actorId} picking up item ${itemId}`);
+
+  // --- 1. Get current state of all involved entities ---
+  const actorComponents = currentState.get(actorId);
+  const itemComponents = currentState.get(itemId);
+
+  if (!actorComponents || !itemComponents) {
+    console.warn(`[itemPickedUpReducer] Actor or Item not found. Aborting.`);
+    return currentState;
+  }
+
+  const itemLocation = itemComponents.get(LOCATION_COMPONENT_TYPE) as IsPresentInRoomComponent | undefined;
+  if (!itemLocation) {
+    console.warn(`[itemPickedUpReducer] Item ${itemId} has no location. Aborting.`);
+    return currentState;
+  }
+  const roomId = itemLocation.roomId;
+  const roomComponents = currentState.get(roomId);
+
+  if (!roomComponents) {
+    console.warn(`[itemPickedUpReducer] Room ${roomId} not found. Aborting.`);
+    return currentState;
+  }
+
+  // --- 2. Create the next state for all entities IMMUTABLY ---
+
+  // a. Update Room: Remove item from inventory
+  const currentRoomInventory = roomComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+  const nextRoomInventory: InventoryComponent = {
+    ...currentRoomInventory,
+    items: currentRoomInventory.items.filter(id => id !== itemId),
+  };
+  const nextRoomComponents = new Map(roomComponents);
+  nextRoomComponents.set(INVENTORY_COMPONENT_TYPE, nextRoomInventory);
+
+  // b. Update Actor: Add item to inventory
+  const currentActorInventory = actorComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+  const nextActorInventory: InventoryComponent = {
+    ...currentActorInventory,
+    items: [...currentActorInventory.items, itemId],
+  };
+  const nextActorComponents = new Map(actorComponents);
+  nextActorComponents.set(INVENTORY_COMPONENT_TYPE, nextActorInventory);
+
+  // c. Update Item: Remove its location component
+  const nextItemComponents = new Map(itemComponents);
+  nextItemComponents.delete(LOCATION_COMPONENT_TYPE);
+
+  // --- 3. Assemble the final world state ---
+  const nextState = new Map(currentState);
+  nextState.set(roomId, nextRoomComponents);
+  nextState.set(actorId, nextActorComponents);
+  nextState.set(itemId, nextItemComponents);
+
+  console.log(`[itemPickedUpReducer] Successfully moved item ${itemId} from room ${roomId} to actor ${actorId}`);
   return nextState;
 }

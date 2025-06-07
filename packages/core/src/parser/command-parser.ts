@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { EntityId } from '../common/types.js';
-import { EventType, GameEvent, PlayerCommandEvent, SearchCommandEvent } from '../events/events.types.js';
+import { EventType, GameEvent, PickupCommandEvent, PlayerCommandEvent, SearchCommandEvent } from '../events/events.types.js';
 
 // Define known verbs
 const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'examine', 'perquisisci', 'explore'];
+const pickupVerbs: string[] = ['pick', 'prendi', 'raccogli', 'take', 'get'];
 
 /* TBD: Add other context variables as needed */
 export interface CommandParserContext {
@@ -35,6 +36,23 @@ export function parseCommand(rawInput: string, context: CommandParserContext): G
     };
     console.log('[parseCommand] Parsed as SearchCommandEvent:', searchEvent);
     return searchEvent;
+  }
+
+  if (pickupVerbs.includes(verb)) {
+    if (argString.length === 0) {
+      // In a real game, you might want a more specific "What do you want to pick up?" event.
+      // For now, we can return null or a generic error event.
+      return null;
+    }
+    const pickupEvent: PickupCommandEvent = {
+      id: uuidv4(),
+      type: EventType.PICKUP_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      targetKeywords: argString,
+    };
+    console.log('[parseCommand] Parsed as PickupCommandEvent:', pickupEvent);
+    return pickupEvent;
   }
 
   // Default to a generic PlayerCommandEvent

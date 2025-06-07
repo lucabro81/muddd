@@ -8,6 +8,8 @@ export enum EventType {
   LOOK_ROOM = 'LookRoom',
   SEARCH_COMMAND = 'SearchCommand',
   PLAYER_DISCOVERED_ITEM = 'PlayerDiscoveredItem',
+  PICKUP_COMMAND = 'PickupCommand',
+  ITEM_PICKED_UP = 'ItemPickedUp',
 }
 
 export interface BaseEvent {
@@ -62,4 +64,25 @@ export interface PlayerDiscoveredItemEvent extends BaseEvent {
   itemId: EntityId;
 }
 
-export type GameEvent = EntityMoveEvent | PlayerCommandEvent | LookTargetEvent | ItemGetEvent | LookRoomEvent | SearchCommandEvent | PlayerDiscoveredItemEvent;
+export interface PickupCommandEvent extends BaseEvent {
+  type: EventType.PICKUP_COMMAND;
+  actorId: EntityId;
+  targetKeywords: string;
+}
+
+export interface ItemPickedUpEvent extends BaseEvent {
+  type: EventType.ITEM_PICKED_UP;
+  actorId: EntityId;
+  itemId: EntityId;
+}
+
+export type GameEvent =
+  | EntityMoveEvent
+  | PlayerCommandEvent
+  | LookTargetEvent
+  | ItemGetEvent
+  | LookRoomEvent
+  | SearchCommandEvent
+  | PlayerDiscoveredItemEvent
+  | PickupCommandEvent
+  | ItemPickedUpEvent;
