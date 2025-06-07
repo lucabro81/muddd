@@ -9,7 +9,7 @@ export const BUTTON_STATE_COMPONENT_TYPE = 'buttonState';
 export const PLAYER_COMPONENT_TYPE = 'player';
 export const ROOM_COMPONENT_TYPE = 'room';
 export const ITEM_COMPONENT_TYPE = 'item';
-export const VISIBLE_COMPONENT_TYPE = 'visible';
+export const VISIBLE_COMPONENT_TYPE = 'visibility';
 export const PERCEPTION_COMPONENT_TYPE = 'perception';
 export const KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE = 'knownHiddenItems';
 
@@ -46,5 +46,5 @@ export interface PlayerComponent extends IComponent { type: typeof PLAYER_COMPON
 export interface IsRoomComponent extends IComponent { type: typeof ROOM_COMPONENT_TYPE; }
 export interface IsItemComponent extends IComponent { type: typeof ITEM_COMPONENT_TYPE; }
 export interface IsVisibleComponent extends IComponent { type: typeof VISIBLE_COMPONENT_TYPE; level?: VisibilityLevel }
-export interface PerceptionComponent extends IComponent { type: typeof PERCEPTION_COMPONENT_TYPE; sightLevel: VisibilityLevel; }
+export interface PerceptionComponent extends IComponent { type: typeof PERCEPTION_COMPONENT_TYPE; sightLevel: VisibilityLevel; searchModifier?: number; }
 export interface KnownHiddenItemsComponent extends IComponent { type: typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE; itemIds: EntityId[]; }

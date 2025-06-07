@@ -1,6 +1,6 @@
 import { type WebSocket } from "@fastify/websocket";
 import { type FastifyInstance, type FastifyRequest } from "fastify";
-import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext, ComponentType, IComponent, DESCRIPTION_COMPONENT_TYPE, DescriptionComponent, IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, EntityId, INVENTORY_COMPONENT_TYPE, InventoryComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel } from "core/main.js"
+import { type WorldType, gameEventEmitter, parseCommand, CommandParserContext, ComponentType, IComponent, DESCRIPTION_COMPONENT_TYPE, DescriptionComponent, IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE, EntityId, INVENTORY_COMPONENT_TYPE, InventoryComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel, EventType, LookRoomEvent } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
 const STARTING_ROOM_ID: EntityId = 'porta_dell_inferno';
@@ -58,7 +58,8 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
 
     const perception: PerceptionComponent = {
       type: PERCEPTION_COMPONENT_TYPE,
-      sightLevel: 1, // Default sight level for new players
+      sightLevel: 0, // Default sight level for new players
+      searchModifier: 1,
     };
     playerComponents.set(PERCEPTION_COMPONENT_TYPE, perception);
 
@@ -68,15 +69,10 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
     clientConnections.set(connectionId, { connection: connection, playerId: playerId, connectionId: connectionId });
 
     connection.send(`Welcome ${description.name}! You are in ${STARTING_ROOM_ID}.`);
-    // TODO: Send the initial room description
-
 
     // 1. Send a welcome message to the client when they connect
     connection.send(`Welcome to the MUD! Your ID: ${playerId}`);
     server.log.info(`<<< Sent welcome message to ${playerId}`);
-
-    // TODO: Here you should create/associate a Player entity for this connection
-    // and maybe send the initial room description.
 
     // 2. Handle messages received from the client
     connection.on('message', (message: Buffer) => {
@@ -99,7 +95,6 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
       if (parsedEvent) {
         gameEventEmitter.emit(parsedEvent.type, parsedEvent);
         server.log.info(`Emitted ${parsedEvent.type} for ${currentActorId}`);
-        connection.send(`Command parsed: verb='${parsedEvent.type}'`); // Feedback aggiornato
       } else {
         connection.send(`Could not parse empty input.`);
       }
@@ -127,6 +122,15 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
       clientConnections.delete(connectionId);
       if (worldState && playerId) worldState.delete(playerId); // Rimuovi anche dallo stato
     });
+
+    const lookRoomEvent: LookRoomEvent = {
+      id: uuidv4(),
+      type: EventType.LOOK_ROOM,
+      timestamp: Date.now(),
+      actorId: playerId,
+      roomId: STARTING_ROOM_ID,
+    };
+    gameEventEmitter.emit(EventType.LOOK_ROOM, lookRoomEvent);
   });
 
 }

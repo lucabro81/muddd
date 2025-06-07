@@ -172,6 +172,8 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
   });
 
   gameEventEmitter.on<SearchCommandEvent>(EventType.SEARCH_COMMAND, async (event) => {
+    server.log.info(`[SearchCommand] Received event: ${event.type}`);
+
     const { actorId } = event;
     if (!worldState) return;
 
@@ -196,26 +198,39 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     }
     const roomId = location.roomId;
     const perception = getComponent<PerceptionComponent>(worldState, actorId, PERCEPTION_COMPONENT_TYPE);
+    server.log.info(`[SearchCommand] Perception: ${JSON.stringify(perception)}`);
     const sightLevel: VisibilityLevel = perception?.sightLevel ?? 0;
+    const searchModifier = perception?.searchModifier ?? 0;
+    const effectiveSearchLevel = sightLevel + searchModifier;
+    server.log.info(`[SearchCommand] Sight level: ${sightLevel}, Search Modifier: ${searchModifier}, Effective Level: ${effectiveSearchLevel}`);
 
     // 3. Get all items in the room's inventory
     const roomInventory = getComponent<InventoryComponent>(worldState, roomId, INVENTORY_COMPONENT_TYPE);
+    server.log.info(`[SearchCommand] Room inventory: ${JSON.stringify(roomInventory)}`);
     if (!roomInventory || roomInventory.items.length === 0) {
       clientData.connection.send(JSON.stringify({ type: 'text', payload: "Cerchi attentamente, ma non trovi nulla di nuovo." }));
       return;
     }
 
-    // 4. Find "hidden" items (visibility level > 0) that the player can see
+    server.log.info(`[SearchCommand] Effective search level: ${effectiveSearchLevel}`);
+
+    // 4. Find "hidden" items (visibility level >= 0) that the player can see depending on their sight level
     const foundItems = roomInventory.items
       .map(itemId => {
         if (!worldState) return null; // Satisfy type checker
         const visibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
+        server.log.info(`[SearchCommand] Visibility: ${JSON.stringify(visibility)} for item ${itemId}`);
         const visibilityLevel: VisibilityLevel = visibility?.level ?? 0;
+        server.log.info(`[SearchCommand] Visibility level: ${visibilityLevel}`);
         return { itemId, visibilityLevel };
       })
-      .filter((item): item is { itemId: EntityId; visibilityLevel: VisibilityLevel } =>
-        item !== null && item.visibilityLevel > 0 && sightLevel >= item.visibilityLevel
-      );
+      .filter((item): item is { itemId: EntityId; visibilityLevel: VisibilityLevel } => {
+        server.log.info(`[SearchCommand] Item: ${JSON.stringify(item)}`);
+        server.log.info(`[SearchCommand] Item visibility level: ${item?.visibilityLevel}`);
+        return item !== null && item.visibilityLevel >= 0 && effectiveSearchLevel >= item.visibilityLevel;
+      });
+
+    server.log.info(`[SearchCommand] Found items: ${JSON.stringify(foundItems)}`);
 
     if (foundItems.length > 0) {
       // Fire an event for each discovered item to update the player's state
@@ -236,7 +251,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
         })
         .filter((name): name is string => !!name);
 
-      const message = `Cerchi attentamente e trovi: ${itemNames.join(', ')}.`;
+      const message = `Cerchi attentamente e trovi: \n\t - ${itemNames.join('\n\t - ')}.`;
       clientData.connection.send(JSON.stringify({ type: 'text', payload: message }));
     } else {
       clientData.connection.send(JSON.stringify({ type: 'text', payload: "Cerchi attentamente, ma non trovi nulla di nuovo." }));

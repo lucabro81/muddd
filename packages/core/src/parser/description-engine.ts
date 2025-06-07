@@ -19,7 +19,11 @@ import {
   IsVisibleComponent,
   VISIBLE_COMPONENT_TYPE,
   KnownHiddenItemsComponent,
-  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE
+  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
+  ROOM_COMPONENT_TYPE,
+  IsRoomComponent,
+  IsItemComponent,
+  ITEM_COMPONENT_TYPE
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -64,6 +68,9 @@ export async function generateRoomDescription(
   }
 
   const roomInventory = getComponent<InventoryComponent>(worldState, roomId, INVENTORY_COMPONENT_TYPE);
+
+  console.log(`[DescEngine] Room ${roomId} inventory: ${JSON.stringify(roomInventory)}`);
+
   let itemsString = 'Non vedi oggetti particolari.';
   if (roomInventory && roomInventory.items.length > 0) {
     const visibleItems = roomInventory.items
@@ -85,8 +92,12 @@ export async function generateRoomDescription(
         // Item is visible if its visibility level is low enough OR if the player already knows about it.
         const isKnown = knownHiddenItems.includes(item.id);
         const canBeSeen = viewerSightLevel >= item.visibilityLevel;
+        console.log(`[DescEngine] Item ${item.id} is known: ${isKnown} (viewerSightLevel: ${viewerSightLevel}, itemVisibilityLevel: ${item.visibilityLevel})`);
+        console.log(`[DescEngine] Item ${item.id} can be seen: ${canBeSeen}`);
         return canBeSeen || isKnown;
       });
+
+    console.log(`[DescEngine] Visible items: ${JSON.stringify(visibleItems)}`);
 
     if (visibleItems.length > 0) {
       const itemString = visibleItems
@@ -99,7 +110,9 @@ export async function generateRoomDescription(
   // Other entities (NPCs/Players) in the room (excluding the viewer)
   let otherEntitiesString = '';
   const presentEntityIds = Array.from(worldState.keys()).filter(entityId => {
-    if (entityId === roomId || entityId === viewerId) return false; // Exclude the room itself and the viewer
+    const isRoom = getComponent<IsRoomComponent>(worldState, entityId, ROOM_COMPONENT_TYPE);
+    const isItem = getComponent<IsItemComponent>(worldState, entityId, ITEM_COMPONENT_TYPE);
+    if (entityId === roomId || entityId === viewerId || isRoom || isItem) return false; // Exclude the room itself and the viewer
     const loc = getComponent<IsPresentInRoomComponent>(worldState, entityId, LOCATION_COMPONENT_TYPE);
     return loc?.roomId === roomId;
   });
@@ -162,6 +175,8 @@ export async function generateRoomDescription(
   • **Punto di Ingresso**: ${'Nessuno.'}
 
   Ricorda: non puoi inventare nulla. Devi includere tutti gli oggetti visibili e tutte le uscite visibili.`;
+
+  console.log(`[DescEngine] Prompt: ${prompt}`);
 
   // --- 3. Call the LLM Provider ---
   try {
