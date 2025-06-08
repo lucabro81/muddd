@@ -229,12 +229,13 @@ export async function generateEntityDescriptionStream(
     contextDetails.push(`Parole Chiave: ${targetDesc.keywords.join(', ')}`);
   }
 
-  // Aggiungi dettagli da altri componenti rilevanti
+  // add details from other relevant components
   const isPickupable = getComponent<IsPickupableComponent>(worldState, targetEntityId, PICKUPABLE_COMPONENT_TYPE);
   if (isPickupable) {
     contextDetails.push("Proprietà: È raccoglibile.");
   }
 
+  // TODO: generalize the pushable state to all entities that can be pushed, not only buttons
   const buttonState = getComponent<ButtonStateComponent>(worldState, targetEntityId, BUTTON_STATE_COMPONENT_TYPE);
   if (buttonState) {
     contextDetails.push(`Stato Bottone: ${buttonState.isPushed ? 'Premuto' : 'Non premuto'}.`);

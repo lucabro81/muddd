@@ -10,6 +10,7 @@ export enum EventType {
   PLAYER_DISCOVERED_ITEM = 'PlayerDiscoveredItem',
   PICKUP_COMMAND = 'PickupCommand',
   ITEM_PICKED_UP = 'ItemPickedUp',
+  INVENTORY_COMMAND = 'InventoryCommand',
 }
 
 export interface BaseEvent {
@@ -76,6 +77,11 @@ export interface ItemPickedUpEvent extends BaseEvent {
   itemId: EntityId;
 }
 
+export interface InventoryCommandEvent extends BaseEvent {
+  type: EventType.INVENTORY_COMMAND;
+  actorId: EntityId;
+}
+
 export type GameEvent =
   | EntityMoveEvent
   | PlayerCommandEvent
@@ -85,4 +91,5 @@ export type GameEvent =
   | SearchCommandEvent
   | PlayerDiscoveredItemEvent
   | PickupCommandEvent
-  | ItemPickedUpEvent;
+  | ItemPickedUpEvent
+  | InventoryCommandEvent;

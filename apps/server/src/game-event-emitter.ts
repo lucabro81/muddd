@@ -30,7 +30,8 @@ import {
   KnownHiddenItemsComponent,
   KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
   IsPickupableComponent,
-  PICKUPABLE_COMPONENT_TYPE
+  PICKUPABLE_COMPONENT_TYPE,
+  InventoryCommandEvent
 } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
@@ -106,14 +107,23 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     if (clientData && worldState) {
       server.log.info(`Player ${actorId} is looking at ${targetEntityId}. Generating description stream...`);
       try {
+
+        const inventory = getComponent<InventoryComponent>(worldState, actorId, INVENTORY_COMPONENT_TYPE);
+        const isInInventory = inventory && inventory.items.includes(targetEntityId)
+
         const descriptionStream = await generateEntityDescriptionStream(
           llmProvider, worldState, targetEntityId, actorId, llmModel
         );
         // Send the stream to the client as we did for the room description
         clientData.connection.send('\n'); // Separator
+        let isInInventoryAdded = false;
         for await (const chunk of descriptionStream) {
+          if (isInInventory && !isInInventoryAdded) {
+            clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: '[Inventario]\n' }));
+            isInInventoryAdded = true;
+          }
           if (clientConnections.has(clientData.connectionId)) { // Use the correct key here! e.g. clientData.clientId or req.id
-            clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: chunk }));
+            clientData.connection.send(JSON.stringify({ type: 'stream_chunk', payload: `${chunk}` }));
           } else { break; }
         }
         if (clientConnections.has(clientData.connectionId)) {
@@ -350,6 +360,43 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     const targetDescription = getComponent<DescriptionComponent>(worldState, targetItemId, DESCRIPTION_COMPONENT_TYPE);
     const targetName = targetDescription?.name ?? "l'oggetto";
     clientData.connection.send(JSON.stringify({ type: 'text', payload: `Raccogli: ${targetName}.` }));
+  });
+
+  gameEventEmitter.on<InventoryCommandEvent>(EventType.INVENTORY_COMMAND, async (event) => {
+    const { actorId } = event;
+    server.log.info(`[InventoryCommand] Received for actor ${actorId}`);
+
+    if (!worldState) return;
+
+    // 1. Find player's connection
+    let clientData;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+    if (!clientData) {
+      server.log.warn(`[InventoryCommand] Could not find client for actor ${actorId}`);
+      return;
+    }
+
+    // 2. Get player's inventory
+    const inventory = getComponent<InventoryComponent>(worldState, actorId, INVENTORY_COMPONENT_TYPE);
+    if (!inventory || inventory.items.length === 0) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: "Non hai nulla con te." }));
+      return;
+    }
+
+    // 3. Format the list of items
+    const itemNames = inventory.items.map(itemId => {
+      if (!worldState) return "un oggetto non identificabile"; // Should not happen, but satisfies TS
+      const description = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
+      return description?.name ?? "un oggetto senza nome";
+    });
+
+    const message = `Hai con te:\n - ${itemNames.join('\n - ')}`;
+    clientData.connection.send(JSON.stringify({ type: 'text', payload: message }));
   });
 }
 

@@ -122,8 +122,9 @@ function getItemsCandidateIds(itemIds: EntityId[], roomId: RoomId, actorId: Enti
   return itemIds.filter(entityId => {
     console.log(`[applyEvent] Checking entity ${entityId} in room ${roomId} against actor ${actorId}`, getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE));
     if (getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE)) {
-      const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
-      return loc?.roomId === roomId;
+      // const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
+      // return loc?.roomId === roomId;
+      return true;
     }
     return false;
   });
@@ -187,21 +188,17 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
         const roomInventory = getComponent<InventoryComponent>(currentState, roomId, INVENTORY_COMPONENT_TYPE);
         console.log(`[applyEvent] Room inventory: ${roomInventory?.items.map(item => item).join(', ')}`);
 
+        const playerInventory = getComponent<InventoryComponent>(currentState, actorId, INVENTORY_COMPONENT_TYPE);
+        console.log(`[applyEvent] Player inventory: ${playerInventory?.items.map(item => item).join(', ')}`);
+
         const itemIds = roomInventory?.items ? [...roomInventory.items] : [];
+        const playerItemIds = playerInventory?.items ? [...playerInventory.items] : [];
         console.log(`[applyEvent] ItemIds IDs: ${itemIds.join(', ')}`);
+        console.log(`[applyEvent] PlayerItemIds IDs: ${playerItemIds.join(', ')}`);
 
         console.log(`[applyEvent] currentState.keys(): ${Array.from(currentState.keys()).join(', ')}`);
 
-        const candidateIds: EntityId[] = getItemsCandidateIds(itemIds, roomId, actorId, currentState);
-        // itemIds.forEach(entityId => {
-        //   console.log(`[applyEvent] Checking entity ${entityId} in room ${roomId} against actor ${actorId}`, getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE));
-        //   if (getComponent<IsItemComponent>(currentState, entityId, ITEM_COMPONENT_TYPE)) {
-        //     const loc = getComponent<IsPresentInRoomComponent>(currentState, entityId, LOCATION_COMPONENT_TYPE);
-        //     if (loc?.roomId === roomId) {
-        //       candidateIds.push(entityId);
-        //     }
-        //   }
-        // });
+        const candidateIds: EntityId[] = getItemsCandidateIds([...itemIds, ...playerItemIds], roomId, actorId, currentState);
 
         // 3. Implementa la logica di matching (funzione helper?)
         // This function compares argString with name/keywords of the candidates
