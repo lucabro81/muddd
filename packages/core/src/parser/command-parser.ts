@@ -1,11 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
 import { EntityId } from '../common/types.js';
-import { EventType, GameEvent, InventoryCommandEvent, PickupCommandEvent, PlayerCommandEvent, SearchCommandEvent } from '../events/events.types.js';
+import { EventType, GameEvent, InventoryCommandEvent, PickupCommandEvent, PlayerCommandEvent, PutCommandEvent, SearchCommandEvent } from '../events/events.types.js';
 
 // Define known verbs
 const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'examine', 'perquisisci', 'explore'];
 const pickupVerbs: string[] = ['pick', 'prendi', 'raccogli', 'take', 'get'];
 const inventoryVerbs: string[] = ['inventory', 'inventario', 'inv', 'i'];
+const putVerbs: string[] = ['put', 'metti', 'inserisci', 'place'];
 
 /* TBD: Add other context variables as needed */
 export interface CommandParserContext {
@@ -65,6 +66,35 @@ export function parseCommand(rawInput: string, context: CommandParserContext): G
     };
     console.log('[parseCommand] Parsed as InventoryCommandEvent:', inventoryEvent);
     return inventoryEvent;
+  }
+
+  if (putVerbs.includes(verb)) {
+    // This command has the structure "put <item> in <target>"
+    const inIndex = argString.indexOf(' in ');
+
+    if (inIndex === -1) {
+      // "in" separator not found, invalid command format
+      return null;
+    }
+
+    const itemKeywords = argString.substring(0, inIndex).trim();
+    const targetKeywords = argString.substring(inIndex + 4).trim();
+
+    if (itemKeywords.length === 0 || targetKeywords.length === 0) {
+      // Both item and target must be specified
+      return null;
+    }
+
+    const putEvent: PutCommandEvent = {
+      id: uuidv4(),
+      type: EventType.PUT_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      itemKeywords: itemKeywords,
+      targetKeywords: targetKeywords,
+    };
+    console.log('[parseCommand] Parsed as PutCommandEvent:', putEvent);
+    return putEvent;
   }
 
   // Default to a generic PlayerCommandEvent

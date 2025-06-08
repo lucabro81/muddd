@@ -12,6 +12,7 @@ export const ITEM_COMPONENT_TYPE = 'item';
 export const VISIBLE_COMPONENT_TYPE = 'visibility';
 export const PERCEPTION_COMPONENT_TYPE = 'perception';
 export const KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE = 'knownHiddenItems';
+export const SOCKET_COMPONENT_TYPE = 'socket';
 
 export type ComponentType =
   typeof DESCRIPTION_COMPONENT_TYPE |
@@ -25,7 +26,8 @@ export type ComponentType =
   typeof ITEM_COMPONENT_TYPE |
   typeof VISIBLE_COMPONENT_TYPE |
   typeof PERCEPTION_COMPONENT_TYPE |
-  typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE;
+  typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE |
+  typeof SOCKET_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 export type VisibilityLevel = 0 | 1 | 2;
@@ -48,3 +50,12 @@ export interface IsItemComponent extends IComponent { type: typeof ITEM_COMPONEN
 export interface IsVisibleComponent extends IComponent { type: typeof VISIBLE_COMPONENT_TYPE; level?: VisibilityLevel }
 export interface PerceptionComponent extends IComponent { type: typeof PERCEPTION_COMPONENT_TYPE; sightLevel: VisibilityLevel; searchModifier?: number; }
 export interface KnownHiddenItemsComponent extends IComponent { type: typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE; itemIds: EntityId[]; }
+export interface SocketComponent extends IComponent {
+  type: typeof SOCKET_COMPONENT_TYPE;
+  acceptsItemId: EntityId;
+  isOccupied: boolean;
+  unlocksGateEntityId: EntityId;
+  unlocksDirectionOnGate: string;
+  socketDescriptionWhenEmpty: string;
+  socketDescriptionWhenFilled: string;
+}

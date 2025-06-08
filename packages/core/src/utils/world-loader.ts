@@ -13,6 +13,8 @@ import {
   IsPickupableComponent, PICKUPABLE_COMPONENT_TYPE,
   ButtonStateComponent, BUTTON_STATE_COMPONENT_TYPE,
   PlayerComponent, PLAYER_COMPONENT_TYPE,
+  SocketComponent,
+  SOCKET_COMPONENT_TYPE,
   // ...importa le altre se necessario
 } from '../common/types.js';
 
@@ -120,6 +122,24 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
       return { type: KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE, itemIds: data.itemIds };
     }
     console.error(`Invalid data for KnownHiddenItemsComponent:`, data);
+    return null;
+  },
+
+  [SOCKET_COMPONENT_TYPE]: (data): SocketComponent | null => {
+    if (
+      typeof data.acceptsItemId === 'string' &&
+      typeof data.isOccupied === 'boolean' &&
+      typeof data.unlocksGateEntityId === 'string' &&
+      typeof data.unlocksDirectionOnGate === 'string' &&
+      typeof data.socketDescriptionWhenEmpty === 'string' &&
+      typeof data.socketDescriptionWhenFilled === 'string'
+    ) {
+      return {
+        ...data,
+        type: SOCKET_COMPONENT_TYPE,
+      };
+    }
+    console.error(`Invalid data for SocketComponent:`, data);
     return null;
   },
 };

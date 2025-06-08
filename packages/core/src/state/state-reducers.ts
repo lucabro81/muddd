@@ -7,9 +7,11 @@ import {
   KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
   KnownHiddenItemsComponent,
   LOCATION_COMPONENT_TYPE,
+  SocketComponent,
+  SOCKET_COMPONENT_TYPE,
   WorldType
 } from '../common/types.js';
-import { EntityMoveEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
+import { EntityMoveEvent, ItemPlacedEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
 import util from 'util';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
@@ -157,5 +159,57 @@ export function itemPickedUpReducer(
   nextState.set(itemId, nextItemComponents);
 
   console.log(`[itemPickedUpReducer] Successfully moved item ${itemId} from room ${roomId} to actor ${actorId}`);
+  return nextState;
+}
+
+export function itemPlacedReducer(
+  currentState: WorldType,
+  event: ItemPlacedEvent
+): WorldType {
+  const { actorId, itemId, targetId } = event;
+  console.log(`[itemPlacedReducer] Processing event for actor ${actorId} placing item ${itemId} in target ${targetId}`);
+
+  // --- 1. Get current state of all involved entities ---
+  const actorComponents = currentState.get(actorId);
+  const itemComponents = currentState.get(itemId);
+  const targetComponents = currentState.get(targetId);
+
+  if (!actorComponents || !itemComponents || !targetComponents) {
+    console.warn(`[itemPlacedReducer] Actor, Item, or Target not found. Aborting.`);
+    return currentState;
+  }
+
+  // --- 2. Create the next state for all entities IMMUTABLY ---
+
+  // a. Update Actor: Remove item from inventory
+  const currentActorInventory = actorComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+  const nextActorInventory: InventoryComponent = {
+    ...currentActorInventory,
+    items: currentActorInventory.items.filter(id => id !== itemId),
+  };
+  const nextActorComponents = new Map(actorComponents);
+  nextActorComponents.set(INVENTORY_COMPONENT_TYPE, nextActorInventory);
+
+  // b. Update Target: Set socket to occupied
+  const currentSocket = targetComponents.get(SOCKET_COMPONENT_TYPE) as SocketComponent;
+  const nextSocket: SocketComponent = {
+    ...currentSocket,
+    isOccupied: true,
+  };
+  const nextTargetComponents = new Map(targetComponents);
+  nextTargetComponents.set(SOCKET_COMPONENT_TYPE, nextSocket);
+
+  // c. Update Item: It no longer exists in the world on its own.
+  //    We can choose to delete it or just leave it without a location.
+  //    For now, we will delete it for simplicity.
+  const nextState = new Map(currentState);
+  nextState.delete(itemId);
+
+  // --- 3. Assemble the final world state ---
+  nextState.set(actorId, nextActorComponents);
+  nextState.set(targetId, nextTargetComponents);
+
+
+  console.log(`[itemPlacedReducer] Successfully placed item ${itemId} in target ${targetId}`);
   return nextState;
 }
