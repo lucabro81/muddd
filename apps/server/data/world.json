@@ -12,7 +12,7 @@
         {
           "type": "connections",
           "exits": {
-            "nord": ["antinferno"]
+            "nord": ["exit_porta_inferno_nord"]
           }
         },
         {
@@ -35,7 +35,8 @@
           "name": "Architrave con Iscrizione Danneggiata",
           "keywords": ["architrave", "iscrizione", "incavo", "pietra"],
           "text": "Un massiccio architrave di pietra sovrasta il varco. Lungo la sua superficie corre un'antica iscrizione, ma una sezione è chiaramente mancante, lasciando un profondo incavo dalla forma irregolare. Le lettere circostanti sono consumate dal tempo.",
-          "briefDescription": "un imponente architrave di pietra con un'iscrizione visibilmente danneggiata"
+          "briefDescription": "un imponente architrave di pietra con un'iscrizione visibilmente danneggiata",
+          "descriptionInRoom": "Un architrave di pietra domina il varco. L'iscrizione che lo percorre è interrotta da un incavo irregolare, evidente anche a un primo sguardo."
         },
         {
           "type": "location",
@@ -69,14 +70,18 @@
             "scheggia"
           ],
           "text": "Una scheggia di pietra scura, fredda al tatto. La sua forma irregolare e i bordi scheggiati suggeriscono che si sia staccata da un incavo più grande. Incise sulla sua superficie consumata ci sono lettere che formano chiaramente la parola 'SPERANZA'.",
-          "briefDescription": "una piccola e scura scheggia di pietra con delle lettere incise, seminascosta dalla polvere"
+          "briefDescription": "una piccola e scura scheggia di pietra con delle lettere incise, seminascosta dalla polvere",
+          "descriptionInInventory": "Un frammento di pietra inciso, freddo al tatto. Sembra importante.",
+          "descriptionInRoom": "Un piccolo frammento di pietra giace qui, inciso con caratteri antichi.",
+          "descriptionInstalled": "Il frammento è incastrato perfettamente nell'incavo dell'architrave, completando l'iscrizione."
         },
         {
           "type": "location",
           "roomId": "porta_dell_inferno"
         },
         {
-          "type": "pickupable"
+          "type": "pickupable",
+          "pickableWhenInstalled": false
         },
         {
           "type": "visibility",
@@ -106,8 +111,8 @@
         {
           "type": "connections",
           "exits": {
-            "nord": ["riva_acheronte"],
-            "sud": ["porta_dell_inferno"]
+            "nord": ["exit_antinferno_nord"],
+            "sud": ["exit_antinferno_sud"]
           }
         },
         {
@@ -182,6 +187,60 @@
         {
           "type": "room"
         }
+      ]
+    },
+    {
+      "id": "exit_porta_inferno_nord",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "nord",
+          "fromRoomId": "porta_dell_inferno",
+          "toRoomId": "antinferno"
+        },
+        {
+          "type": "description",
+          "name": "Varco a Nord",
+          "keywords": ["varco", "nord", "uscita"],
+          "text": "Un varco oscuro si apre verso nord, oltre la soglia dell'inferno."
+        },
+        { "type": "visibility", "level": 0 }
+      ]
+    },
+    {
+      "id": "exit_antinferno_nord",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "nord",
+          "fromRoomId": "antinferno",
+          "toRoomId": "riva_acheronte"
+        },
+        {
+          "type": "description",
+          "name": "Sentiero verso l'Acheronte",
+          "keywords": ["sentiero", "nord", "uscita"],
+          "text": "Un sentiero polveroso si dirige verso nord, dove si intravede la riva di un fiume oscuro."
+        },
+        { "type": "visibility", "level": 0 }
+      ]
+    },
+    {
+      "id": "exit_antinferno_sud",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "sud",
+          "fromRoomId": "antinferno",
+          "toRoomId": "porta_dell_inferno"
+        },
+        {
+          "type": "description",
+          "name": "Sentiero verso la Porta dell'Inferno",
+          "keywords": ["sentiero", "sud", "uscita"],
+          "text": "Un sentiero ritorna verso sud, in direzione della Porta dell'Inferno."
+        },
+        { "type": "visibility", "level": 0 }
       ]
     }
   ]

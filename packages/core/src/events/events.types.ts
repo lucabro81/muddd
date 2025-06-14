@@ -13,6 +13,7 @@ export enum EventType {
   INVENTORY_COMMAND = 'InventoryCommand',
   PUT_COMMAND = 'PutCommand',
   ITEM_PLACED = 'ItemPlaced',
+  EXAMINE_COMMAND = 'ExamineCommand',
 }
 
 export interface BaseEvent {
@@ -98,6 +99,12 @@ export interface ItemPlacedEvent extends BaseEvent {
   targetId: EntityId;
 }
 
+export interface ExamineCommandEvent extends BaseEvent {
+  type: EventType.EXAMINE_COMMAND;
+  actorId: EntityId;
+  targetKeywords: string;
+}
+
 export type GameEvent =
   | EntityMoveEvent
   | PlayerCommandEvent
@@ -110,4 +117,5 @@ export type GameEvent =
   | ItemPickedUpEvent
   | InventoryCommandEvent
   | PutCommandEvent
-  | ItemPlacedEvent;
+  | ItemPlacedEvent
+  | ExamineCommandEvent;

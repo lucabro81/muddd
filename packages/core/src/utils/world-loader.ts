@@ -15,6 +15,8 @@ import {
   PlayerComponent, PLAYER_COMPONENT_TYPE,
   SocketComponent,
   SOCKET_COMPONENT_TYPE,
+  ExitComponent,
+  EXIT_COMPONENT_TYPE,
   // ...importa le altre se necessario
 } from '../common/types.js';
 
@@ -140,6 +142,23 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
       };
     }
     console.error(`Invalid data for SocketComponent:`, data);
+    return null;
+  },
+
+  [EXIT_COMPONENT_TYPE]: (data): ExitComponent | null => {
+    if (
+      typeof data.direction === 'string' &&
+      typeof data.fromRoomId === 'string' &&
+      typeof data.toRoomId === 'string'
+    ) {
+      return {
+        type: EXIT_COMPONENT_TYPE,
+        direction: data.direction,
+        fromRoomId: data.fromRoomId,
+        toRoomId: data.toRoomId,
+      };
+    }
+    console.error(`Invalid data for ExitComponent:`, data);
     return null;
   },
 };

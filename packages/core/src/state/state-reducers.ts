@@ -9,7 +9,11 @@ import {
   LOCATION_COMPONENT_TYPE,
   SocketComponent,
   SOCKET_COMPONENT_TYPE,
-  WorldType
+  WorldType,
+  VISIBLE_COMPONENT_TYPE,
+  PICKUPABLE_COMPONENT_TYPE,
+  IsVisibleComponent,
+  IsPickupableComponent
 } from '../common/types.js';
 import { EntityMoveEvent, ItemPlacedEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
 import util from 'util';
@@ -190,25 +194,38 @@ export function itemPlacedReducer(
   const nextActorComponents = new Map(actorComponents);
   nextActorComponents.set(INVENTORY_COMPONENT_TYPE, nextActorInventory);
 
-  // b. Update Target: Set socket to occupied
+  // b. Update Target: Set socket to occupied and add item to its inventory
   const currentSocket = targetComponents.get(SOCKET_COMPONENT_TYPE) as SocketComponent;
   const nextSocket: SocketComponent = {
     ...currentSocket,
     isOccupied: true,
   };
+  const currentTargetInventory = targetComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent | undefined;
+  const nextTargetInventory: InventoryComponent = {
+    type: INVENTORY_COMPONENT_TYPE,
+    items: [...(currentTargetInventory?.items || []), itemId],
+  };
   const nextTargetComponents = new Map(targetComponents);
   nextTargetComponents.set(SOCKET_COMPONENT_TYPE, nextSocket);
+  nextTargetComponents.set(INVENTORY_COMPONENT_TYPE, nextTargetInventory);
 
-  // c. Update Item: It no longer exists in the world on its own.
-  //    We can choose to delete it or just leave it without a location.
-  //    For now, we will delete it for simplicity.
-  const nextState = new Map(currentState);
-  nextState.delete(itemId);
+  // c. Update Item: Remove its location, set visibility to 0, and handle pickupable
+  const nextItemComponents = new Map(itemComponents);
+  nextItemComponents.delete(LOCATION_COMPONENT_TYPE);
+  // Set visibility to obvious
+  const visibilityComponent: IsVisibleComponent = { type: VISIBLE_COMPONENT_TYPE, level: 0 };
+  nextItemComponents.set(VISIBLE_COMPONENT_TYPE, visibilityComponent);
+  // Handle pickupable
+  const pickupable = itemComponents.get(PICKUPABLE_COMPONENT_TYPE) as IsPickupableComponent | undefined;
+  if (pickupable && pickupable.pickableWhenInstalled === false) {
+    nextItemComponents.delete(PICKUPABLE_COMPONENT_TYPE);
+  }
 
   // --- 3. Assemble the final world state ---
+  const nextState = new Map(currentState);
   nextState.set(actorId, nextActorComponents);
   nextState.set(targetId, nextTargetComponents);
-
+  nextState.set(itemId, nextItemComponents);
 
   console.log(`[itemPlacedReducer] Successfully placed item ${itemId} in target ${targetId}`);
   return nextState;

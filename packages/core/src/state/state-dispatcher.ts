@@ -1,5 +1,5 @@
 import { gameEventEmitter } from '../events/game-event-emitter.js';
-import { ComponentType, CONNECTIONS_COMPONENT_TYPE, EntityId, IComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, IsItemComponent, IsPresentInRoomComponent, ITEM_COMPONENT_TYPE, LOCATION_COMPONENT_TYPE, RoomConnectionsComponent, RoomId, WorldType } from '../common/types.js';
+import { ComponentType, CONNECTIONS_COMPONENT_TYPE, EntityId, IComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, IsItemComponent, IsPresentInRoomComponent, ITEM_COMPONENT_TYPE, LOCATION_COMPONENT_TYPE, RoomConnectionsComponent, RoomId, WorldType, ExitComponent, EXIT_COMPONENT_TYPE } from '../common/types.js';
 import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent, LookRoomEvent, PlayerDiscoveredItemEvent, ItemPickedUpEvent, ItemPlacedEvent } from '../events/events.types.js';
 import { entityMoveReducer, itemPickedUpReducer, itemPlacedReducer, playerDiscoveredItemReducer } from './state-reducers.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -39,7 +39,7 @@ const moveVerbs: Array<string> = [
 ] as const;
 
 const lookVerbs: Array<string> = [
-  'look', 'l', 'guarda', 'esamina', 'examine', 'osserva', 'inspect', 'check', 'ispeziona', 'describe',
+  'look', 'l', 'guarda', 'check', 'ispeziona', 'describe',
   'descrivi'
 ] as const;
 
@@ -248,11 +248,16 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
 
           const possibleDestinations = connectionsComponent.exits[requestedDirection];
           if (possibleDestinations && possibleDestinations.length > 0) {
-            //TODO: Simple for now: take the first valid destination
-            const destinationRoomId = possibleDestinations[0];
-
-            fireEntityMoveEvent(actorId, originRoomId, destinationRoomId);
-
+            const exitEntityId = possibleDestinations[0]; // TODO: handle multiple exits per direction if needed
+            const exitComponent = getComponent<ExitComponent>(currentState, exitEntityId, EXIT_COMPONENT_TYPE);
+            if (exitComponent && typeof exitComponent.toRoomId === 'string') {
+              const destinationRoomId = exitComponent.toRoomId;
+              fireEntityMoveEvent(actorId, originRoomId, destinationRoomId);
+            } else {
+              console.log(`[applyEvent] Exit entity ${exitEntityId} missing or invalid ExitComponent.`);
+              // TODO: Feedback to the player "You can't go in that direction."
+              return currentState;
+            }
           }
           else {
             console.log(`[applyEvent] No exit towards ${requestedDirection} from room ${originRoomId}.`);

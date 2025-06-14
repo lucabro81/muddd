@@ -23,7 +23,11 @@ import {
   ROOM_COMPONENT_TYPE,
   IsRoomComponent,
   IsItemComponent,
-  ITEM_COMPONENT_TYPE
+  ITEM_COMPONENT_TYPE,
+  SocketComponent,
+  SOCKET_COMPONENT_TYPE,
+  ExitComponent,
+  EXIT_COMPONENT_TYPE
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -78,30 +82,31 @@ export async function generateRoomDescription(
         const itemDesc = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
         const itemVisibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
         const itemVisibilityLevel: VisibilityLevel = itemVisibility?.level ?? 0;
-
+        // Socket-aware description
+        const socketAware = getSocketAwareDescription(worldState, itemId);
+        // Socket label logic
+        const socket = getComponent(worldState, itemId, 'socket') as import('../common/types.js').SocketComponent | undefined;
+        let briefDescription = itemDesc?.briefDescription;
+        if (socket && socket.isOccupied) {
+          briefDescription = (briefDescription ? briefDescription + ' ' : '') + '(al suo posto)';
+        }
         return {
           id: itemId,
           name: itemDesc?.name,
-          description: itemDesc?.text, // Full description for potential later use or detailed examination
-          briefDescription: itemDesc?.briefDescription, // The new brief description
+          description: socketAware || (itemDesc ? getItemDescriptionByContext(itemDesc, 'room') : undefined),
+          briefDescription,
           visibilityLevel: itemVisibilityLevel
         };
       })
       .filter(item => {
         if (!item.name) return false;
-        // Item is visible if its visibility level is low enough OR if the player already knows about it.
         const isKnown = knownHiddenItems.includes(item.id);
         const canBeSeen = viewerSightLevel >= item.visibilityLevel;
-        console.log(`[DescEngine] Item ${item.id} is known: ${isKnown} (viewerSightLevel: ${viewerSightLevel}, itemVisibilityLevel: ${item.visibilityLevel})`);
-        console.log(`[DescEngine] Item ${item.id} can be seen: ${canBeSeen}`);
         return canBeSeen || isKnown;
       });
-
-    console.log(`[DescEngine] Visible items: ${JSON.stringify(visibleItems)}`);
-
     if (visibleItems.length > 0) {
       const itemString = visibleItems
-        .map((item, index) => `\t${index + 1}. Oggetto: ${item.briefDescription || 'Non descritto brevemente.'}`)
+        .map((item, index) => `\t${index + 1}. Oggetto: ${item.briefDescription || 'Non descritto brevemente.'}\n   ${item.description || ''}`)
         .join('\n');
       itemsString = `\n${itemString}.`;
     }
@@ -130,11 +135,21 @@ export async function generateRoomDescription(
   const roomConnections = getComponent<RoomConnectionsComponent>(worldState, roomId, CONNECTIONS_COMPONENT_TYPE);
   let exitsString = 'Non vedi uscite evidenti.';
   if (roomConnections && roomConnections.exits) {
-    const availableExits = Object.entries(roomConnections.exits)
-      .filter(([, destinationIds]) => destinationIds && destinationIds.length > 0)
-      .map(([direction]) => direction);
-    if (availableExits.length > 0) {
-      exitsString = `Le uscite ovvie sono: ${availableExits.join(', ')}.`;
+    // New logic: exits are exit entity IDs
+    const exitInfos: string[] = [];
+    for (const [, exitEntityIds] of Object.entries(roomConnections.exits)) {
+      if (exitEntityIds && exitEntityIds.length > 0) {
+        for (const exitEntityId of exitEntityIds) {
+          const exitComponent = getComponent<ExitComponent>(worldState, exitEntityId, EXIT_COMPONENT_TYPE);
+          if (exitComponent) {
+            // Optionally, you could add more info from the exit entity (e.g., description)
+            exitInfos.push(`${exitComponent.direction}`);
+          }
+        }
+      }
+    }
+    if (exitInfos.length > 0) {
+      exitsString = `Le uscite ovvie sono: ${exitInfos.join(', ')}.`;
     }
   }
 
@@ -191,24 +206,28 @@ export async function generateRoomDescription(
 }
 
 /**
-* Genera la descrizione dettagliata di una specifica entità (oggetto, creatura)
-* usando un LLMProvider in streaming.
+* Generates the detailed description of a specific entity (object, creature)
+* using an LLMProvider in streaming.
 *
-* @param provider L'istanza del provider LLM da usare.
-* @param worldState Lo stato attuale del mondo.
-* @param targetEntityId L'ID dell'entità da descrivere.
-* @param viewerId L'ID dell'entità che sta guardando (per futuro contesto).
-* @param llmModel Il nome del modello LLM da usare.
-* @returns Una Promise che risolve con un AsyncIterable<string> che produce
-* i chunk della descrizione generata.
+* @param provider Provider instance of the LLM to use.
+* @param worldState Current state of the world.
+* @param targetEntityId ID of the entity to describe.
+* @param viewerId ID of the entity that is looking (for future context).
+* @param llmModel Name of the LLM model to use.
+* @param context Context for the entity description.
+* @returns A Promise that resolves with an AsyncIterable<string> that produces
+* the chunks of the generated description.
 */
 export async function generateEntityDescriptionStream(
   provider: LLMProvider,
   worldState: WorldType,
   targetEntityId: EntityId,
-  viewerId: EntityId, // Per ora non usato attivamente, ma utile per futuro
-  llmModel: string = 'llama3'
+  viewerId: EntityId, // not actually used, but useful for future context
+  llmModel: string = 'llama3',
+  context: DescriptionContext = 'room'
 ): Promise<AsyncIterable<string>> {
+
+  console.log(`[DescEngine] Generating entity description stream for ${targetEntityId}, context: ${context}`);
 
 
   // --- 1. Raccogli Contesto dell'Entità Target ---
@@ -222,9 +241,16 @@ export async function generateEntityDescriptionStream(
     return errorStream();
   }
 
+  // Socket-aware description
+  const socketAware = getSocketAwareDescription(worldState, targetEntityId);
+
+  console.log(`[DescEngine] Socket-aware description: ${socketAware}`);
+  console.log(`[DescEngine] Context details: ${getItemDescriptionByContext(targetDesc, context)}}`);
+
   let contextDetails: string[] = [];
   contextDetails.push(`Nome: ${targetDesc.name}`);
-  contextDetails.push(`Descrizione Base: ${targetDesc.text}`);
+  contextDetails.push(`Descrizione: ${getItemDescriptionByContext(targetDesc, context)}`);
+  socketAware && contextDetails.push(`Descrizione aggiuntiva in base allo stato: ${socketAware}`);
   if (targetDesc.keywords && targetDesc.keywords.length > 0) {
     contextDetails.push(`Parole Chiave: ${targetDesc.keywords.join(', ')}`);
   }
@@ -251,15 +277,15 @@ export async function generateEntityDescriptionStream(
     } else {
       contextDetails.push("Contenuto: Sembra vuoto o non riesci a vederne il contenuto.");
     }
-  } else if (inventory) { // Esiste il componente inventario ma è vuoto
+  } else if (inventory) { // Inventory component exists but is empty
     contextDetails.push("Contenuto: È vuoto.");
   }
 
-  // TODO: Aggiungere logica per altri componenti (Health, Stats, Material, Condition, Effetti visibili, ecc.)
-  // quando verranno definiti e popolati nel world.json o dinamicamente.
+  // TODO: Add logic for other components (Health, Stats, Material, Condition, Visible Effects, etc.)
+  // when they are defined and populated in the world.json or dynamically.
 
   // --- 2. Costruisci il Prompt ---
-  // Simile al prompt per la stanza, ma focalizzato sull'entità
+  // Similar to the room prompt, but focused on the entity
   const prompt = `Sei un narratore fantasy per un MUD testuale. 
   Il tuo compito è generare la descrizione di una stanza **in seconda persona**, come se parlassi direttamente al giocatore.
   Scrivi in tono conciso ma evocativo, senza diventare piatto.
@@ -268,7 +294,7 @@ export async function generateEntityDescriptionStream(
     
   --- Istruzioni Output ---
   1. Inizia la descrizione con "Osservi attentamente..." o una frase simile.
-  2. Integra tutti i dettagli forniti (Descrizione Base, Parole Chiave se rilevanti, Proprietà, Stato) in una descrizione fluida.
+  2. Integra tutti i dettagli forniti (Descrizione, Parole Chiave se rilevanti, Proprietà, Stato) in una descrizione fluida.
   3. Cita il contenuto se è presente un 'interno' e questo è accessibile ed è noto il modo con cui potervi accedere.
   
   Rispondi **solo** con la descrizione richiesta, in prosa coerente.
@@ -277,6 +303,8 @@ export async function generateEntityDescriptionStream(
   ${contextDetails.map(detail => `• ${detail}`).join('\n')}
   
   Ricorda: non puoi inventare nulla, ma solo descrivere in base a quanto è stato fornito.`;
+
+  console.log(`[DescEngine] Prompt: ${prompt}`);
 
   // --- 3. Call the LLM Provider ---
   try {
@@ -289,4 +317,21 @@ export async function generateEntityDescriptionStream(
     }
     return errorStream();
   }
+}
+
+type DescriptionContext = 'inventory' | 'room' | 'installed' | 'examination';
+function getItemDescriptionByContext(desc: DescriptionComponent, context: DescriptionContext): string {
+  if (context === 'examination') return desc.text;
+  if (context === 'inventory' && desc.descriptionInInventory) return desc.descriptionInInventory;
+  if (context === 'room' && desc.descriptionInRoom) return desc.descriptionInRoom;
+  if (context === 'installed' && desc.descriptionInstalled) return desc.descriptionInstalled;
+  return desc.text;
+}
+
+function getSocketAwareDescription(worldState: WorldType, entityId: EntityId): string | undefined {
+  const socket = getComponent(worldState, entityId, SOCKET_COMPONENT_TYPE) as SocketComponent | undefined;
+  if (socket) {
+    return socket.isOccupied ? socket.socketDescriptionWhenFilled : socket.socketDescriptionWhenEmpty;
+  }
+  return undefined;
 }

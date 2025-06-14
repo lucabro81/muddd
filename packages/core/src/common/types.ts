@@ -13,6 +13,7 @@ export const VISIBLE_COMPONENT_TYPE = 'visibility';
 export const PERCEPTION_COMPONENT_TYPE = 'perception';
 export const KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE = 'knownHiddenItems';
 export const SOCKET_COMPONENT_TYPE = 'socket';
+export const EXIT_COMPONENT_TYPE = 'exit';
 
 export type ComponentType =
   typeof DESCRIPTION_COMPONENT_TYPE |
@@ -27,7 +28,8 @@ export type ComponentType =
   typeof VISIBLE_COMPONENT_TYPE |
   typeof PERCEPTION_COMPONENT_TYPE |
   typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE |
-  typeof SOCKET_COMPONENT_TYPE;
+  typeof SOCKET_COMPONENT_TYPE |
+  typeof EXIT_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 export type VisibilityLevel = 0 | 1 | 2;
@@ -38,11 +40,20 @@ export interface IComponent {
 
 export type WorldType = Map<EntityId, Map<ComponentType, IComponent>>
 
-export interface DescriptionComponent extends IComponent { type: typeof DESCRIPTION_COMPONENT_TYPE; name: string; keywords: string[]; text: string; briefDescription?: string; }
+export interface DescriptionComponent extends IComponent {
+  type: typeof DESCRIPTION_COMPONENT_TYPE;
+  name: string;
+  keywords: string[];
+  text: string;
+  briefDescription?: string;
+  descriptionInInventory?: string;
+  descriptionInRoom?: string;
+  descriptionInstalled?: string;
+}
 export interface RoomConnectionsComponent extends IComponent { type: typeof CONNECTIONS_COMPONENT_TYPE; exits: Record<string, EntityId[]>; }
 export interface IsPresentInRoomComponent extends IComponent { type: typeof LOCATION_COMPONENT_TYPE; roomId: EntityId; }
 export interface InventoryComponent extends IComponent { type: typeof INVENTORY_COMPONENT_TYPE; items: EntityId[]; }
-export interface IsPickupableComponent extends IComponent { type: typeof PICKUPABLE_COMPONENT_TYPE; }
+export interface IsPickupableComponent extends IComponent { type: typeof PICKUPABLE_COMPONENT_TYPE; pickableWhenInstalled?: boolean; }
 export interface ButtonStateComponent extends IComponent { type: typeof BUTTON_STATE_COMPONENT_TYPE; isPushed: boolean; }
 export interface PlayerComponent extends IComponent { type: typeof PLAYER_COMPONENT_TYPE; clientId: string; }
 export interface IsRoomComponent extends IComponent { type: typeof ROOM_COMPONENT_TYPE; }
@@ -58,4 +69,10 @@ export interface SocketComponent extends IComponent {
   unlocksDirectionOnGate: string;
   socketDescriptionWhenEmpty: string;
   socketDescriptionWhenFilled: string;
+}
+export interface ExitComponent extends IComponent {
+  type: typeof EXIT_COMPONENT_TYPE;
+  direction: string;
+  fromRoomId: EntityId;
+  toRoomId: EntityId;
 }

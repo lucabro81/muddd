@@ -1,12 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import { EntityId } from '../common/types.js';
-import { EventType, GameEvent, InventoryCommandEvent, PickupCommandEvent, PlayerCommandEvent, PutCommandEvent, SearchCommandEvent } from '../events/events.types.js';
+import {
+  EventType,
+  GameEvent,
+  InventoryCommandEvent,
+  PickupCommandEvent,
+  PlayerCommandEvent,
+  PutCommandEvent,
+  SearchCommandEvent,
+  ExamineCommandEvent
+} from '../events/events.types.js';
 
 // Define known verbs
-const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'examine', 'perquisisci', 'explore'];
+const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'perquisisci', 'explore'];
 const pickupVerbs: string[] = ['pick', 'prendi', 'raccogli', 'take', 'get'];
 const inventoryVerbs: string[] = ['inventory', 'inventario', 'inv', 'i'];
 const putVerbs: string[] = ['put', 'metti', 'inserisci', 'place'];
+const examineVerbs: string[] = ['examine', 'esamina', 'inspect', 'guarda', 'osserva', 'analizza'];
 
 /* TBD: Add other context variables as needed */
 export interface CommandParserContext {
@@ -95,6 +105,21 @@ export function parseCommand(rawInput: string, context: CommandParserContext): G
     };
     console.log('[parseCommand] Parsed as PutCommandEvent:', putEvent);
     return putEvent;
+  }
+
+  if (examineVerbs.includes(verb)) {
+    if (argString.length === 0) {
+      return null;
+    }
+    const examineEvent: ExamineCommandEvent = {
+      id: uuidv4(),
+      type: EventType.EXAMINE_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      targetKeywords: argString,
+    };
+    console.log('[parseCommand] Parsed as ExamineCommandEvent:', examineEvent);
+    return examineEvent;
   }
 
   // Default to a generic PlayerCommandEvent
