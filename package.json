@@ -1,6 +1,7 @@
 {
   "name": "muddd",
-  "private": true,
+  "author": "Luca Brognara",
+  "private": false,
   "description": "Exploring the ancient MUD through the lens of modern AI",
   "scripts": {
     "build": "turbo run build",
