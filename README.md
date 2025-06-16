@@ -27,7 +27,7 @@ This POC is set in the Inferno of Dante's Divina Commedia, offering a small dung
 - **Turborepo** for monorepo management
 - **TypeScript** throughout all apps and packages
 - **Vite** for fast development
-- **LLM integration** for dynamic content generation
+- **Ollama** as the LLM provider for dynamic content generation
 - **pnpm** for package management
 
 ## Monorepo Structure
@@ -62,7 +62,7 @@ This repository is organized as a Turborepo with the following apps and packages
    ```sh
    pnpm build
    ```
-3. Set up your `.env` files with the necessary LLM credentials (see per-app documentation for details).
+3. Set up your `.env` files in each app based on the provided `.env-example` files (e.g., `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `MUD_SERVER_URL`).
 4. Start the server:
    ```sh
    pnpm --filter server dev
