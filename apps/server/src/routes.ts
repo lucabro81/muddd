@@ -44,21 +44,21 @@ export function routes(server: FastifyInstance, worldState: WorldType | null, cl
     };
     playerComponents.set(DESCRIPTION_COMPONENT_TYPE, description);
 
-    const location: IsPresentInRoomComponent = { // <-- Componente di locazione!
+    const location: IsPresentInRoomComponent = {
       type: LOCATION_COMPONENT_TYPE,
-      roomId: STARTING_ROOM_ID, // <-- Imposta la stanza iniziale!
+      roomId: STARTING_ROOM_ID,
     };
     playerComponents.set(LOCATION_COMPONENT_TYPE, location);
 
     const inventory: InventoryComponent = {
       type: INVENTORY_COMPONENT_TYPE,
-      items: [], // Inventario vuoto all'inizio
+      items: [],
     };
     playerComponents.set(INVENTORY_COMPONENT_TYPE, inventory);
 
     const perception: PerceptionComponent = {
       type: PERCEPTION_COMPONENT_TYPE,
-      sightLevel: 0, // Default sight level for new players
+      sightLevel: 0,
       searchModifier: 1,
     };
     playerComponents.set(PERCEPTION_COMPONENT_TYPE, perception);

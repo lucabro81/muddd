@@ -9,9 +9,9 @@ const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 
 describe('State Dispatcher (applyEvent)', () => {
   let initialState: WorldType;
-  const movingEntityId: EntityId = 'button_rusty';
-  const originRoomId: EntityId = 'room_entrance';
-  const destinationRoomId: EntityId = 'room_inner_cave';
+  const movingEntityId: EntityId = 'player_test';
+  const originRoomId: EntityId = 'porta_dell_inferno';
+  const destinationRoomId: EntityId = 'antinferno';
 
   // Load the initial state before each test
   beforeEach(() => {
@@ -57,7 +57,7 @@ describe('State Dispatcher (applyEvent)', () => {
     expect(nextEntityComponents?.get('description')).toEqual(initialState.get(movingEntityId)?.get('description')); // Deep equality check
 
     // 5. Other entities unchanged (partial check): Verify that another entity is not changed
-    expect(nextState.get('room_entrance')).toEqual(initialState.get('room_entrance')); // Deep equality check
+    expect(nextState.get('porta_dell_inferno')).toEqual(initialState.get('porta_dell_inferno')); // Deep equality check
 
 
   });

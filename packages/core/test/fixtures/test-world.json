@@ -1,73 +1,270 @@
 {
   "entities": [
     {
-      "id": "room_entrance",
+      "id": "porta_dell_inferno",
       "components": [
         {
           "type": "description",
-          "name": "Ingresso della Caverna",
-          "keywords": ["caverna", "ingresso", "grotta", "entrata"],
-          "text": "Ti trovi all'ingresso buio e umido di una caverna. Le pareti rocciose gocciolano e l'aria odora di terra bagnata e muschio. Un debole spiffero proviene da nord."
+          "name": "Porta dell'Inferno",
+          "keywords": ["porta", "inferno", "soglia", "entrata", "architrave"],
+          "text": "Ti trovi davanti a una soglia monumentale sovrastata da un imponente architrave di pietra. Il passaggio verso nord è avvolto da un'oscurità impenetrabile che respinge ogni tentativo di attraversarlo."
         },
         {
           "type": "connections",
           "exits": {
-            "nord": ["room_inner_cave"]
+            "nord": ["exit_porta_inferno_nord"]
           }
         },
         {
           "type": "inventory",
-          "items": ["button_rusty"]
+          "items": [
+            "frammento_iscrizione_infernale",
+            "architrave_con_iscrizione"
+          ]
+        },
+        {
+          "type": "room"
         }
       ]
     },
     {
-      "id": "room_inner_cave",
+      "id": "architrave_con_iscrizione",
       "components": [
         {
           "type": "description",
-          "name": "Interno della Caverna",
-          "keywords": ["caverna", "interno", "grotta"],
-          "text": "Sei più all'interno della caverna. È ancora più buio qui, riesci a malapena a distinguere le forme. Senti l'eco dei tuoi passi. L'unica uscita evidente è a sud."
+          "name": "Architrave con Iscrizione Danneggiata",
+          "keywords": ["architrave", "iscrizione", "incavo", "pietra"],
+          "text": "Un massiccio architrave di pietra sovrasta il varco. Lungo la sua superficie corre un'antica iscrizione, ma una sezione è chiaramente mancante, lasciando un profondo incavo dalla forma irregolare. Le lettere circostanti sono consumate dal tempo.",
+          "briefDescription": "un imponente architrave di pietra con un'iscrizione visibilmente danneggiata",
+          "descriptionInRoom": "Un architrave di pietra domina il varco. L'iscrizione che lo percorre è interrotta da un incavo irregolare, evidente anche a un primo sguardo."
+        },
+        {
+          "type": "location",
+          "roomId": "porta_dell_inferno"
+        },
+        {
+          "type": "socket",
+          "acceptsItemId": "frammento_iscrizione_infernale",
+          "isOccupied": false,
+          "unlocksGateEntityId": "exit_porta_inferno_nord",
+          "unlocksDirectionOnGate": "nord",
+          "socketDescriptionWhenEmpty": "L'incavo nell'iscrizione è vuoto, in attesa.",
+          "socketDescriptionWhenFilled": "Il frammento di pietra è incastrato perfettamente nell'incavo, completando l'iscrizione: \"Per me si va ne la città dolente, per me si va ne l'etterno dolore, per me si va tra la perduta gente. Giustizia mosse il mio alto fattore: fecemi la divina podestate, la somma sapienza e 'l primo amore. Dinanzi a me non fuor cose create se non etterne, e io etterno duro. Lasciate ogne speranza, voi ch'intrate\""
+        },
+        {
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": "frammento_iscrizione_infernale",
+      "components": [
+        {
+          "type": "description",
+          "name": "Frammento d'Iscrizione Infernale",
+          "keywords": [
+            "frammento",
+            "iscrizione",
+            "pietra",
+            "speranza",
+            "scheggia"
+          ],
+          "text": "Una scheggia di pietra scura, fredda al tatto. La sua forma irregolare e i bordi scheggiati suggeriscono che si sia staccata da un incavo più grande. Incise sulla sua superficie consumata ci sono lettere che formano chiaramente la parola 'SPERANZA'.",
+          "briefDescription": "una piccola e scura scheggia di pietra con delle lettere incise, seminascosta dalla polvere",
+          "descriptionInInventory": "Un frammento di pietra inciso, freddo al tatto. Sembra importante.",
+          "descriptionInRoom": "Un piccolo frammento di pietra giace qui, inciso con caratteri dall'aria antica, o meglio, senza tempo.",
+          "descriptionInstalled": "Il frammento è incastrato perfettamente nell'incavo dell'architrave, completando l'iscrizione."
+        },
+        {
+          "type": "location",
+          "roomId": "porta_dell_inferno"
+        },
+        {
+          "type": "pickupable",
+          "pickableWhenInstalled": false
+        },
+        {
+          "type": "visibility",
+          "level": 1
+        },
+        {
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": "antinferno",
+      "components": [
+        {
+          "type": "description",
+          "name": "Antinferno - La Terra degli Ignavi",
+          "keywords": [
+            "antinferno",
+            "ignavi",
+            "pusillanimi",
+            "neutri",
+            "vespe",
+            "polvere"
+          ],
+          "text": "Ti trovi in una landa grigia e desolata, spazzata da un vento incessante che solleva nugoli di polvere. Un lamento continuo e indistinto si leva da anime che corrono senza sosta, inseguite da vespe e mosconi. Non appartengono né al bene né al male, sono i pusillanimi che vissero senza infamia e senza lode."
         },
         {
           "type": "connections",
           "exits": {
-            "sud": ["room_entrance"]
+            "nord": ["exit_antinferno_nord"],
+            "sud": ["exit_antinferno_sud"]
           }
         },
         {
           "type": "inventory",
           "items": []
+        },
+        {
+          "type": "room"
         }
       ]
     },
     {
-      "id": "button_rusty",
+      "id": "riva_acheronte",
       "components": [
         {
           "type": "description",
-          "name": "Bottone Arrugginito su Piastra",
+          "name": "Riva dell'Acheronte - Il Fiume del Dolore",
           "keywords": [
-            "bottone",
-            "pulsante",
-            "arrugginito",
-            "ruggine",
-            "piastra",
-            "cavo"
+            "acheronte",
+            "fiume",
+            "riva",
+            "caronte",
+            "anime",
+            "barca",
+            "nebbia"
           ],
-          "text": "Un pulsante di metallo arrugginito è fissato al centro di una robusta piastra metallica ancorata al pavimento. Dalla piastra parte un spesso cavo nero e fibroso che si perde nell'ombra vicina."
+          "text": "Giungi sulla sponda melmosa di un vasto fiume nero, l'Acheronte. Le sue acque lente e oleose emanano un fetore di palude e disperazione. Sulla riva opposta, una nebbia oscura cela ogni visuale, e da essa provengono lamenti strazianti. Una folla di anime nude e tremanti si accalca sulla riva, contendendosi un posto su una barca scura condotta da una figura minacciosa."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "nord": ["limbo_primo_cerchio"],
+            "sud": ["antinferno"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        },
+        {
+          "type": "room"
+        }
+      ]
+    },
+    {
+      "id": "limbo_primo_cerchio",
+      "components": [
+        {
+          "type": "description",
+          "name": "Limbo - Primo Cerchio",
+          "keywords": [
+            "limbo",
+            "primo cerchio",
+            "nobile castello",
+            "spiriti virtuosi",
+            "pagani",
+            "bambini non battezzati",
+            "sette mura"
+          ],
+          "text": "Attraversato il fiume oscuro, approdi in un luogo sorprendentemente sereno, seppur privo di gioia. Ti trovi all'interno del Primo Cerchio, il Limbo. Davanti a te si erge il Nobile Castello, circondato da sette mura e sette porte, dimora dei grandi spiriti virtuosi del passato pagano e dei bambini non battezzati. Un prato di fresca verdura si estende intorno, illuminato da una luce propria, separata dalle tenebre infernali."
+        },
+        {
+          "type": "connections",
+          "exits": {
+            "sud": ["riva_acheronte"]
+          }
+        },
+        {
+          "type": "inventory",
+          "items": []
+        },
+        {
+          "type": "room"
+        }
+      ]
+    },
+    {
+      "id": "exit_porta_inferno_nord",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "nord",
+          "fromRoomId": "porta_dell_inferno",
+          "toRoomId": "antinferno"
+        },
+        {
+          "type": "description",
+          "name": "Varco a Nord",
+          "keywords": ["varco", "nord", "uscita"],
+          "text": "Un varco oscuro si apre verso nord. Oltre, solo i sogni o incubi più profondi possono descrivere cosa vi è nascosto."
+        },
+        { "type": "visibility", "level": 0 },
+        { "type": "locked" }
+      ]
+    },
+    {
+      "id": "exit_antinferno_nord",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "nord",
+          "fromRoomId": "antinferno",
+          "toRoomId": "riva_acheronte"
+        },
+        {
+          "type": "description",
+          "name": "Sentiero verso l'Acheronte",
+          "keywords": ["sentiero", "nord", "uscita"],
+          "text": "Un sentiero polveroso si dirige verso nord, dove si intravede la riva di un fiume oscuro."
+        },
+        { "type": "visibility", "level": 0 }
+      ]
+    },
+    {
+      "id": "exit_antinferno_sud",
+      "components": [
+        {
+          "type": "exit",
+          "direction": "sud",
+          "fromRoomId": "antinferno",
+          "toRoomId": "porta_dell_inferno"
+        },
+        {
+          "type": "description",
+          "name": "Sentiero verso la Porta dell'Inferno",
+          "keywords": ["sentiero", "sud", "uscita"],
+          "text": "Un sentiero ritorna verso sud, in direzione della Porta dell'Inferno."
+        },
+        { "type": "visibility", "level": 0 }
+      ]
+    },
+    {
+      "id": "player_test",
+      "components": [
+        {
+          "type": "description",
+          "name": "Test Player",
+          "keywords": ["player", "tester"],
+          "text": "A being of pure test energy."
         },
         {
           "type": "location",
-          "roomId": "room_entrance"
+          "roomId": "porta_dell_inferno"
         },
         {
-          "type": "buttonState",
-          "isPushed": false
+          "type": "inventory",
+          "items": []
         },
         {
-          "type": "pickupable"
+          "type": "perception",
+          "sightLevel": 0,
+          "searchModifier": 1
         }
       ]
     }
