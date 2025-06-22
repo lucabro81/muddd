@@ -25,10 +25,6 @@ import {
   EntityMoveEvent,
   LookTargetEvent,
   LookRoomEvent,
-  PlayerDiscoveredItemEvent,
-  ItemPickedUpEvent,
-  ItemPlacedEvent,
-  ItemUsedEvent,
   EntityUnlockedEvent,
   CommandFailedEvent,
   CommandFailureReason
@@ -336,18 +332,9 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             return currentState; // No state changes
           }
 
-          console.log("[applyEvent] Exits: ");
-          console.dir(connectionsComponent.exits, { depth: null, colors: true });
-
           const possibleDestinations = connectionsComponent.exits[requestedDirection];
           if (possibleDestinations && possibleDestinations.length > 0) {
             const exitEntityId = possibleDestinations[0]; // TODO: handle multiple exits per direction if needed
-
-            console.log(`[applyEvent] Exit entity ID: ${exitEntityId}`);
-
-
-            console.log("diocane 3");
-            console.dir(currentState, { depth: null, colors: true });
 
             // Check if the exit is locked
             const isLocked = getComponent<IComponent>(currentState, exitEntityId, LOCKED_COMPONENT_TYPE);

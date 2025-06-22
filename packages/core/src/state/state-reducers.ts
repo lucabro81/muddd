@@ -256,18 +256,9 @@ export function entityUnlockedReducer(
   const nextEntityComponents = new Map(entityComponents);
   nextEntityComponents.delete(LOCKED_COMPONENT_TYPE);
 
-  // console.log(`[entityUnlockedReducer] Entity ${entityId} components: ${Array.from(nextEntityComponents.keys()).join(', ')}`);
-  console.log("diocane 1");
-  console.dir(nextEntityComponents, { depth: null, colors: true });
-  util.inspect(nextEntityComponents, { depth: null, colors: true });
-
   // 4. Create a new world state map
   const nextState = new Map(currentState);
   nextState.set(entityId, nextEntityComponents);
-
-  console.log("diocane 2");
-  console.dir(nextState, { depth: null, colors: true });
-
 
   console.log(`[entityUnlockedReducer] Successfully unlocked entity ${entityId}`);
   return nextState;

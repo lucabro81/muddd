@@ -1,0 +1,24 @@
+Core Package Test Plan
+
+Our goal is to test that our state changes work exactly as expected. We'll focus on the deterministic parts of our system first.
+
+1.  **State Reducers (`state-reducers.ts`)**: This is our highest priority. These are pure functions, which makes them the easiest and most valuable to test. We must verify that for a given state and event, the output state is exactly correct.
+    *   `entityUnlockedReducer`: Does it correctly remove the `LockedComponent`?
+    *   `itemPlacedReducer`: Is the item correctly moved from the player's inventory to the target's? Is the socket's `isOccupied` flag set?
+    *   `itemPickedUpReducer`: Is the item moved from the room's inventory to the player's?
+    *   `playerDiscoveredItemReducer`: Is the item ID correctly added to the player's `KnownHiddenItemsComponent`?
+    *   `entityMoveReducer`: Is the entity's `IsPresentInRoomComponent` updated with the new `roomId`?
+
+2.  **State Dispatcher (`state-dispatcher.ts`)**: This is the brain of our game. We need to test its logic for translating events into other events or state changes.
+    *   **`ITEM_USED` Event**: Given a state where the `use` should succeed, does `applyEvent` correctly chain to the `entityUnlockedReducer`'s logic?
+    *   **`PLAYER_COMMAND` (Go)**: Given a state with a locked exit, does `applyEvent` correctly fire a `CommandFailedEvent` with the `EXIT_LOCKED` reason?
+    *   **`PLAYER_COMMAND` (Go)**: Given a state with an open exit, does `applyEvent` correctly chain to the `entityMoveReducer`'s logic?
+
+3.  **Command Parser (`command-parser.ts`)**: We should test that the parser correctly interprets raw string input into the appropriate command events.
+    *   `use <item> on <target>`: Does it produce a valid `UseCommandEvent` with the correct `itemKeywords` and `targetKeywords`?
+    *   `put <item> in <target>`: Does it correctly parse the `PutCommandEvent`?
+    *   Test edge cases: commands with extra spaces, no arguments, etc.
+
+4.  **Description Engine (`description-engine.ts`)**: We'll test the prompt, not the LLM's output.
+    *   Given a state with open and locked exits, does the engine generate a prompt string containing both a "Uscite aperte" section and a "Passaggi bloccati" section?
+    *   Given a state with hidden items, does the prompt correctly include or exclude them based on the player's perception and known items? 
