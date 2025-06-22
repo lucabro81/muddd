@@ -8,7 +8,8 @@ import {
   PlayerCommandEvent,
   PutCommandEvent,
   SearchCommandEvent,
-  ExamineCommandEvent
+  ExamineCommandEvent,
+  UseCommandEvent
 } from '../events/events.types.js';
 
 // Define known verbs
@@ -17,6 +18,7 @@ const pickupVerbs: string[] = ['pick', 'prendi', 'raccogli', 'take', 'get'];
 const inventoryVerbs: string[] = ['inventory', 'inventario', 'inv', 'i'];
 const putVerbs: string[] = ['put', 'metti', 'inserisci', 'place'];
 const examineVerbs: string[] = ['examine', 'esamina', 'inspect', 'guarda', 'osserva', 'analizza'];
+const useVerbs: string[] = ['use', 'usa'];
 
 /* TBD: Add other context variables as needed */
 export interface CommandParserContext {
@@ -105,6 +107,35 @@ export function parseCommand(rawInput: string, context: CommandParserContext): G
     };
     console.log('[parseCommand] Parsed as PutCommandEvent:', putEvent);
     return putEvent;
+  }
+
+  if (useVerbs.includes(verb)) {
+    // This command has the structure "use <item> on <target>"
+    const onIndex = argString.indexOf(' on ');
+
+    if (onIndex === -1) {
+      // "on" separator not found, invalid command format
+      return null;
+    }
+
+    const itemKeywords = argString.substring(0, onIndex).trim();
+    const targetKeywords = argString.substring(onIndex + 4).trim();
+
+    if (itemKeywords.length === 0 || targetKeywords.length === 0) {
+      // Both item and target must be specified
+      return null;
+    }
+
+    const useEvent: UseCommandEvent = {
+      id: uuidv4(),
+      type: EventType.USE_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      itemKeywords: itemKeywords,
+      targetKeywords: targetKeywords,
+    };
+    console.log('[parseCommand] Parsed as UseCommandEvent:', useEvent);
+    return useEvent;
   }
 
   if (examineVerbs.includes(verb)) {

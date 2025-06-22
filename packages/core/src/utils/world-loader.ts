@@ -1,12 +1,31 @@
 // packages/core/src/world-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorldType, EntityId, ComponentType, IComponent, ROOM_COMPONENT_TYPE, IsRoomComponent, IsItemComponent, ITEM_COMPONENT_TYPE, VISIBLE_COMPONENT_TYPE, IsVisibleComponent, PERCEPTION_COMPONENT_TYPE, PerceptionComponent, VisibilityLevel, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE, KnownHiddenItemsComponent } from '../common/types.js';
+import {
+  WorldType,
+  EntityId,
+  ComponentType,
+  IComponent,
+  ROOM_COMPONENT_TYPE,
+  IsRoomComponent,
+  IsItemComponent,
+  ITEM_COMPONENT_TYPE,
+  VISIBLE_COMPONENT_TYPE,
+  IsVisibleComponent,
+  PERCEPTION_COMPONENT_TYPE,
+  PerceptionComponent,
+  VisibilityLevel,
+  KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
+  KnownHiddenItemsComponent,
+  LOCKED_COMPONENT_TYPE,
+  LockedComponent
+} from '../common/types.js';
 
 // --- IMPORTA TUTTE LE TUE INTERFACCE COMPONENTE SPECIFICHE QUI ---
 // Assumendo che siano esportate da un file indice o direttamente
 import {
-  DescriptionComponent, DESCRIPTION_COMPONENT_TYPE,
+  DescriptionComponent,
+  DESCRIPTION_COMPONENT_TYPE,
   RoomConnectionsComponent, CONNECTIONS_COMPONENT_TYPE,
   IsPresentInRoomComponent, LOCATION_COMPONENT_TYPE,
   InventoryComponent, INVENTORY_COMPONENT_TYPE,
@@ -160,6 +179,10 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
     }
     console.error(`Invalid data for ExitComponent:`, data);
     return null;
+  },
+
+  [LOCKED_COMPONENT_TYPE]: (_data): LockedComponent => {
+    return { type: LOCKED_COMPONENT_TYPE };
   },
 };
 

@@ -13,9 +13,10 @@ import {
   VISIBLE_COMPONENT_TYPE,
   PICKUPABLE_COMPONENT_TYPE,
   IsVisibleComponent,
-  IsPickupableComponent
+  IsPickupableComponent,
+  LOCKED_COMPONENT_TYPE,
 } from '../common/types.js';
-import { EntityMoveEvent, ItemPlacedEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
+import { EntityMoveEvent, ItemPlacedEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent, EntityUnlockedEvent } from '../events/events.types.js';
 import util from 'util';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
@@ -228,5 +229,46 @@ export function itemPlacedReducer(
   nextState.set(itemId, nextItemComponents);
 
   console.log(`[itemPlacedReducer] Successfully placed item ${itemId} in target ${targetId}`);
+  return nextState;
+}
+
+export function entityUnlockedReducer(
+  currentState: WorldType,
+  event: EntityUnlockedEvent
+): WorldType {
+  const { entityId } = event;
+  console.log(`[entityUnlockedReducer] Processing event for entity ${entityId}`);
+
+  // 1. Get the current components map for the entity
+  const entityComponents = currentState.get(entityId);
+  if (!entityComponents) {
+    console.warn(`[entityUnlockedReducer] Entity ${entityId} not found. Aborting.`);
+    return currentState;
+  }
+
+  // 2. Check if the entity has the LockedComponent
+  if (!entityComponents.has(LOCKED_COMPONENT_TYPE)) {
+    console.warn(`[entityUnlockedReducer] Entity ${entityId} is not locked. Aborting.`);
+    return currentState;
+  }
+
+  // 3. Create a new components map for the entity, removing the LockedComponent
+  const nextEntityComponents = new Map(entityComponents);
+  nextEntityComponents.delete(LOCKED_COMPONENT_TYPE);
+
+  // console.log(`[entityUnlockedReducer] Entity ${entityId} components: ${Array.from(nextEntityComponents.keys()).join(', ')}`);
+  console.log("diocane 1");
+  console.dir(nextEntityComponents, { depth: null, colors: true });
+  util.inspect(nextEntityComponents, { depth: null, colors: true });
+
+  // 4. Create a new world state map
+  const nextState = new Map(currentState);
+  nextState.set(entityId, nextEntityComponents);
+
+  console.log("diocane 2");
+  console.dir(nextState, { depth: null, colors: true });
+
+
+  console.log(`[entityUnlockedReducer] Successfully unlocked entity ${entityId}`);
   return nextState;
 }

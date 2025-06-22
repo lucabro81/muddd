@@ -14,6 +14,7 @@ export const PERCEPTION_COMPONENT_TYPE = 'perception';
 export const KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE = 'knownHiddenItems';
 export const SOCKET_COMPONENT_TYPE = 'socket';
 export const EXIT_COMPONENT_TYPE = 'exit';
+export const LOCKED_COMPONENT_TYPE = 'locked';
 
 export type ComponentType =
   typeof DESCRIPTION_COMPONENT_TYPE |
@@ -29,7 +30,8 @@ export type ComponentType =
   typeof PERCEPTION_COMPONENT_TYPE |
   typeof KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE |
   typeof SOCKET_COMPONENT_TYPE |
-  typeof EXIT_COMPONENT_TYPE;
+  typeof EXIT_COMPONENT_TYPE |
+  typeof LOCKED_COMPONENT_TYPE;
 export type RoomId = string;
 export type Timestamp = number;
 export type VisibilityLevel = 0 | 1 | 2;
@@ -75,4 +77,7 @@ export interface ExitComponent extends IComponent {
   direction: string;
   fromRoomId: EntityId;
   toRoomId: EntityId;
+}
+export interface LockedComponent extends IComponent {
+  type: typeof LOCKED_COMPONENT_TYPE;
 }

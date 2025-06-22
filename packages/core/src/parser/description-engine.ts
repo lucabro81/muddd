@@ -27,7 +27,9 @@ import {
   SocketComponent,
   SOCKET_COMPONENT_TYPE,
   ExitComponent,
-  EXIT_COMPONENT_TYPE
+  EXIT_COMPONENT_TYPE,
+  IComponent,
+  LOCKED_COMPONENT_TYPE
 } from "../common/types.js"
 import { getComponent } from "../state/state-dispatcher.js"
 import { LLMProvider } from "./ollama-provider.js";
@@ -136,20 +138,41 @@ export async function generateRoomDescription(
   let exitsString = 'Non vedi uscite evidenti.';
   if (roomConnections && roomConnections.exits) {
     // New logic: exits are exit entity IDs
-    const exitInfos: string[] = [];
+    const openExitInfos: string[] = [];
+    const lockedExitInfos: string[] = [];
+
     for (const [, exitEntityIds] of Object.entries(roomConnections.exits)) {
       if (exitEntityIds && exitEntityIds.length > 0) {
         for (const exitEntityId of exitEntityIds) {
           const exitComponent = getComponent<ExitComponent>(worldState, exitEntityId, EXIT_COMPONENT_TYPE);
+          const descriptionComponent = getComponent<DescriptionComponent>(worldState, exitEntityId, DESCRIPTION_COMPONENT_TYPE);
+          const isLocked = !!getComponent<IComponent>(worldState, exitEntityId, LOCKED_COMPONENT_TYPE);
+
+          // TODO: Add visibility check here based on player's sightLevel
           if (exitComponent) {
-            // Optionally, you could add more info from the exit entity (e.g., description)
-            exitInfos.push(`${exitComponent.direction}`);
+            const exitName = descriptionComponent ? `${exitComponent.direction} (${descriptionComponent.name})` : exitComponent.direction;
+            if (isLocked) {
+              lockedExitInfos.push(exitName);
+            } else {
+              openExitInfos.push(exitName);
+            }
           }
         }
       }
     }
-    if (exitInfos.length > 0) {
-      exitsString = `Le uscite ovvie sono: ${exitInfos.join(', ')}.`;
+
+    let openExitsStr = '';
+    if (openExitInfos.length > 0) {
+      openExitsStr = `\nUscite aperte: ${openExitInfos.join(', ')}.`;
+    }
+
+    let lockedExitsStr = '';
+    if (lockedExitInfos.length > 0) {
+      lockedExitsStr = `\nPassaggi bloccati: ${lockedExitInfos.join(', ')}.`;
+    }
+
+    if (openExitsStr || lockedExitsStr) {
+      exitsString = `${openExitsStr}${lockedExitsStr}`;
     }
   }
 

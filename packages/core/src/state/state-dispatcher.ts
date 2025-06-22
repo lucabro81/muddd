@@ -1,9 +1,48 @@
 import { gameEventEmitter } from '../events/game-event-emitter.js';
-import { ComponentType, CONNECTIONS_COMPONENT_TYPE, EntityId, IComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, IsItemComponent, IsPresentInRoomComponent, ITEM_COMPONENT_TYPE, LOCATION_COMPONENT_TYPE, RoomConnectionsComponent, RoomId, WorldType, ExitComponent, EXIT_COMPONENT_TYPE } from '../common/types.js';
-import { GameEvent, EventType, EntityMoveEvent, LookTargetEvent, LookRoomEvent, PlayerDiscoveredItemEvent, ItemPickedUpEvent, ItemPlacedEvent } from '../events/events.types.js';
-import { entityMoveReducer, itemPickedUpReducer, itemPlacedReducer, playerDiscoveredItemReducer } from './state-reducers.js';
+import {
+  ComponentType,
+  CONNECTIONS_COMPONENT_TYPE,
+  EntityId,
+  IComponent,
+  INVENTORY_COMPONENT_TYPE,
+  InventoryComponent,
+  IsItemComponent,
+  IsPresentInRoomComponent,
+  ITEM_COMPONENT_TYPE,
+  LOCATION_COMPONENT_TYPE,
+  RoomConnectionsComponent,
+  RoomId,
+  WorldType,
+  ExitComponent,
+  EXIT_COMPONENT_TYPE,
+  SocketComponent,
+  SOCKET_COMPONENT_TYPE,
+  LOCKED_COMPONENT_TYPE
+} from '../common/types.js';
+import {
+  GameEvent,
+  EventType,
+  EntityMoveEvent,
+  LookTargetEvent,
+  LookRoomEvent,
+  PlayerDiscoveredItemEvent,
+  ItemPickedUpEvent,
+  ItemPlacedEvent,
+  ItemUsedEvent,
+  EntityUnlockedEvent,
+  CommandFailedEvent,
+  CommandFailureReason
+} from '../events/events.types.js';
+import {
+  entityMoveReducer,
+  entityUnlockedReducer,
+  itemPickedUpReducer,
+  itemPlacedReducer,
+  playerDiscoveredItemReducer
+} from './state-reducers.js';
 import { v4 as uuidv4 } from 'uuid';
 import { findTargetEntity } from '../parser/target-resolver.js';
+import util from 'util';
 
 const directionAliases: Record<string, string> = {
   n: 'nord',
@@ -108,6 +147,30 @@ function fireEntityMoveEvent(entityId: EntityId, originRoomId: RoomId, destinati
   gameEventEmitter.emit(EventType.ENTITY_MOVE, moveEvent);
 }
 
+function fireEntityUnlockedEvent(actorId: EntityId, entityId: EntityId) {
+  const unlockEvent: EntityUnlockedEvent = {
+    id: uuidv4(),
+    type: EventType.ENTITY_UNLOCKED,
+    timestamp: Date.now(),
+    actorId,
+    entityId,
+  };
+  console.log(`[fireEntityUnlockedEvent] Emitting EntityUnlockedEvent for entity ${entityId} by actor ${actorId}`);
+  gameEventEmitter.emit(EventType.ENTITY_UNLOCKED, unlockEvent);
+}
+
+function fireCommandFailedEvent(actorId: EntityId, reason: CommandFailureReason) {
+  const failedEvent: CommandFailedEvent = {
+    id: uuidv4(),
+    type: EventType.COMMAND_FAILED,
+    timestamp: Date.now(),
+    actorId,
+    reason,
+  };
+  console.log(`[fireCommandFailedEvent] Emitting CommandFailedEvent for actor ${actorId} with reason ${reason}`);
+  gameEventEmitter.emit(EventType.COMMAND_FAILED, failedEvent);
+}
+
 function getLocationId(currentState: WorldType, actorId: EntityId): RoomId | undefined {
   const locationComponent = getComponent<IsPresentInRoomComponent>(currentState, actorId, LOCATION_COMPONENT_TYPE);
   if (!locationComponent) {
@@ -153,6 +216,31 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       return itemPickedUpReducer(currentState, event);
     case EventType.ITEM_PLACED:
       return itemPlacedReducer(currentState, event);
+    case EventType.ENTITY_UNLOCKED:
+      return entityUnlockedReducer(currentState, event);
+    case EventType.ITEM_USED:
+      // TODO: This is where we can expand the logic for different item uses.
+      // For now, it only handles the "socket" mechanic.
+      const { actorId: userActorId, itemId, targetId } = event;
+      const targetSocket = getComponent<SocketComponent>(currentState, targetId, SOCKET_COMPONENT_TYPE);
+
+      if (targetSocket && targetSocket.acceptsItemId === itemId) {
+        // Correct item used on the socket, fire unlock event and process it immediately.
+        const unlockEvent: EntityUnlockedEvent = {
+          id: uuidv4(),
+          type: EventType.ENTITY_UNLOCKED,
+          timestamp: Date.now(),
+          actorId: userActorId,
+          entityId: targetSocket.unlocksGateEntityId,
+        };
+        gameEventEmitter.emit(EventType.ENTITY_UNLOCKED, unlockEvent); // Still emit for listeners
+        return applyEvent(currentState, unlockEvent); // Recursively apply the new event
+      }
+
+      // If the check fails, handle incorrect item usage.
+      // TODO: Fire a "CommandFailed" event
+      console.log(`[applyEvent] Item ${itemId} cannot be used on ${targetId}.`);
+      return currentState; // No state change on failure
     case EventType.PLAYER_COMMAND:
       const verb = event.verb?.toLowerCase();
       const args = event.args || [];
@@ -239,6 +327,8 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             return currentState; // No state changes
           }
 
+          console.log(`[applyEvent] Room ${originRoomId}`);
+
           const connectionsComponent = getComponent<RoomConnectionsComponent>(currentState, originRoomId, CONNECTIONS_COMPONENT_TYPE);
           if (!connectionsComponent?.exits) {
             console.log(`[applyEvent] The room ${originRoomId} has no exits defined.`);
@@ -246,13 +336,39 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
             return currentState; // No state changes
           }
 
+          console.log("[applyEvent] Exits: ");
+          console.dir(connectionsComponent.exits, { depth: null, colors: true });
+
           const possibleDestinations = connectionsComponent.exits[requestedDirection];
           if (possibleDestinations && possibleDestinations.length > 0) {
             const exitEntityId = possibleDestinations[0]; // TODO: handle multiple exits per direction if needed
+
+            console.log(`[applyEvent] Exit entity ID: ${exitEntityId}`);
+
+
+            console.log("diocane 3");
+            console.dir(currentState, { depth: null, colors: true });
+
+            // Check if the exit is locked
+            const isLocked = getComponent<IComponent>(currentState, exitEntityId, LOCKED_COMPONENT_TYPE);
+            if (isLocked) {
+              fireCommandFailedEvent(actorId, CommandFailureReason.EXIT_LOCKED);
+              return currentState;
+            }
+
             const exitComponent = getComponent<ExitComponent>(currentState, exitEntityId, EXIT_COMPONENT_TYPE);
             if (exitComponent && typeof exitComponent.toRoomId === 'string') {
               const destinationRoomId = exitComponent.toRoomId;
-              fireEntityMoveEvent(actorId, originRoomId, destinationRoomId);
+              const moveEvent: EntityMoveEvent = {
+                id: uuidv4(),
+                type: EventType.ENTITY_MOVE,
+                timestamp: Date.now(),
+                entityId: actorId,
+                originRoomId: originRoomId,
+                destinationRoomId: destinationRoomId,
+              };
+              gameEventEmitter.emit(EventType.ENTITY_MOVE, moveEvent); // Still emit for listeners
+              return applyEvent(currentState, moveEvent); // Recursively apply the move event
             } else {
               console.log(`[applyEvent] Exit entity ${exitEntityId} missing or invalid ExitComponent.`);
               // TODO: Feedback to the player "You can't go in that direction."

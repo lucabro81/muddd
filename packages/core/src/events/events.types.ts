@@ -1,6 +1,15 @@
 import { EntityId, RoomId, Timestamp } from '../common/types.js';
 
 export enum EventType {
+  UNKNOWN_COMMAND = 'UnknownCommand',
+  LOOK_COMMAND = 'LookCommand',
+  GO_COMMAND = 'GoCommand',
+  GET_COMMAND = 'GetCommand',
+  DROP_COMMAND = 'DropCommand',
+  INVENTORY_COMMAND = 'InventoryCommand',
+  PUSH_COMMAND = 'PushCommand',
+  PLAYER_ENTERED_ROOM = 'PlayerEnteredRoom',
+  PLAYER_LEFT_ROOM = 'PlayerLeftRoom',
   PLAYER_COMMAND = 'PlayerCommand',
   ENTITY_MOVE = 'EntityMove',
   LOOK_TARGET = 'LookTarget',
@@ -10,16 +19,27 @@ export enum EventType {
   PLAYER_DISCOVERED_ITEM = 'PlayerDiscoveredItem',
   PICKUP_COMMAND = 'PickupCommand',
   ITEM_PICKED_UP = 'ItemPickedUp',
-  INVENTORY_COMMAND = 'InventoryCommand',
-  PUT_COMMAND = 'PutCommand',
+  ITEM_DROPPED = 'ItemDropped',
+  BUTTON_PUSHED = 'ButtonPushed',
   ITEM_PLACED = 'ItemPlaced',
   EXAMINE_COMMAND = 'ExamineCommand',
+  PUT_COMMAND = 'PutCommand',
+  USE_COMMAND = 'UseCommand',
+  ENTITY_UNLOCKED = 'EntityUnlocked',
+  ITEM_USED = 'ItemUsed',
+  COMMAND_FAILED = 'CommandFailed',
+}
+
+export enum CommandFailureReason {
+  EXIT_LOCKED = 'ExitLocked',
 }
 
 export interface BaseEvent {
   id: string; // event UUID
   type: EventType;
   timestamp: Timestamp;
+  [key: string]: any;
+  argString?: string;
 }
 
 export interface EntityMoveEvent extends BaseEvent {
@@ -35,7 +55,6 @@ export interface PlayerCommandEvent extends BaseEvent {
   rawInput: RoomId;
   verb?: string;
   args?: string[];
-  argString?: string;
 }
 
 export interface LookTargetEvent extends BaseEvent {
@@ -105,6 +124,32 @@ export interface ExamineCommandEvent extends BaseEvent {
   targetKeywords: string;
 }
 
+export interface UseCommandEvent extends BaseEvent {
+  type: EventType.USE_COMMAND;
+  actorId: EntityId;
+  itemKeywords: string;
+  targetKeywords: string;
+}
+
+export interface ItemUsedEvent extends BaseEvent {
+  type: EventType.ITEM_USED;
+  actorId: EntityId;
+  itemId: EntityId;
+  targetId: EntityId;
+}
+
+export interface EntityUnlockedEvent extends BaseEvent {
+  type: EventType.ENTITY_UNLOCKED;
+  entityId: EntityId;
+  actorId: EntityId;
+}
+
+export interface CommandFailedEvent extends BaseEvent {
+  type: EventType.COMMAND_FAILED;
+  actorId: EntityId;
+  reason: CommandFailureReason;
+}
+
 export type GameEvent =
   | EntityMoveEvent
   | PlayerCommandEvent
@@ -118,4 +163,8 @@ export type GameEvent =
   | InventoryCommandEvent
   | PutCommandEvent
   | ItemPlacedEvent
-  | ExamineCommandEvent;
+  | ExamineCommandEvent
+  | UseCommandEvent
+  | EntityUnlockedEvent
+  | ItemUsedEvent
+  | CommandFailedEvent;

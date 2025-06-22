@@ -7,7 +7,7 @@
           "type": "description",
           "name": "Porta dell'Inferno",
           "keywords": ["porta", "inferno", "soglia", "entrata", "architrave"],
-          "text": "Varchi una soglia monumentale sovrastata da un imponente architrave di pietra. Il passaggio verso nord è avvolto da un'oscurità impenetrabile che respinge ogni tentativo di attraversarlo."
+          "text": "Ti trovi davanti a una soglia monumentale sovrastata da un imponente architrave di pietra. Il passaggio verso nord è avvolto da un'oscurità impenetrabile che respinge ogni tentativo di attraversarlo."
         },
         {
           "type": "connections",
@@ -46,7 +46,7 @@
           "type": "socket",
           "acceptsItemId": "frammento_iscrizione_infernale",
           "isOccupied": false,
-          "unlocksGateEntityId": "porta_dell_inferno",
+          "unlocksGateEntityId": "exit_porta_inferno_nord",
           "unlocksDirectionOnGate": "nord",
           "socketDescriptionWhenEmpty": "L'incavo nell'iscrizione è vuoto, in attesa.",
           "socketDescriptionWhenFilled": "Il frammento di pietra è incastrato perfettamente nell'incavo, completando l'iscrizione: \"Per me si va ne la città dolente, per me si va ne l'etterno dolore, per me si va tra la perduta gente. Giustizia mosse il mio alto fattore: fecemi la divina podestate, la somma sapienza e 'l primo amore. Dinanzi a me non fuor cose create se non etterne, e io etterno duro. Lasciate ogne speranza, voi ch'intrate\""
@@ -72,7 +72,7 @@
           "text": "Una scheggia di pietra scura, fredda al tatto. La sua forma irregolare e i bordi scheggiati suggeriscono che si sia staccata da un incavo più grande. Incise sulla sua superficie consumata ci sono lettere che formano chiaramente la parola 'SPERANZA'.",
           "briefDescription": "una piccola e scura scheggia di pietra con delle lettere incise, seminascosta dalla polvere",
           "descriptionInInventory": "Un frammento di pietra inciso, freddo al tatto. Sembra importante.",
-          "descriptionInRoom": "Un piccolo frammento di pietra giace qui, inciso con caratteri antichi.",
+          "descriptionInRoom": "Un piccolo frammento di pietra giace qui, inciso con caratteri dall'aria antica, o meglio, senza tempo.",
           "descriptionInstalled": "Il frammento è incastrato perfettamente nell'incavo dell'architrave, completando l'iscrizione."
         },
         {
@@ -97,7 +97,7 @@
       "components": [
         {
           "type": "description",
-          "name": "Antinferno - La Terra degli Ignari",
+          "name": "Antinferno - La Terra degli Ignavi",
           "keywords": [
             "antinferno",
             "ignavi",
@@ -106,7 +106,7 @@
             "vespe",
             "polvere"
           ],
-          "text": "Ti trovi in una landa grigia e desolata, spazzata da un vento incessante che solleva nugoli di polvere. Un lamento continuo e indistinto si leva da anime che corrono senza sosta, inseguite da vespe e mosconi. Non appartengono né al bene né al male, i pusillanimi che vissero senza infamia e senza lode."
+          "text": "Ti trovi in una landa grigia e desolata, spazzata da un vento incessante che solleva nugoli di polvere. Un lamento continuo e indistinto si leva da anime che corrono senza sosta, inseguite da vespe e mosconi. Non appartengono né al bene né al male, sono i pusillanimi che vissero senza infamia e senza lode."
         },
         {
           "type": "connections",
@@ -202,9 +202,10 @@
           "type": "description",
           "name": "Varco a Nord",
           "keywords": ["varco", "nord", "uscita"],
-          "text": "Un varco oscuro si apre verso nord, oltre la soglia dell'inferno."
+          "text": "Un varco oscuro si apre verso nord. Oltre, solo i sogni o incubi più profondi possono descrivere cosa vi è nascosto."
         },
-        { "type": "visibility", "level": 0 }
+        { "type": "visibility", "level": 0 },
+        { "type": "locked" }
       ]
     },
     {
