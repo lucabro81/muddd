@@ -93,9 +93,11 @@ const componentRegistry: Record<ComponentType, ComponentFactory> = {
     return null;
   },
 
-  [PICKUPABLE_COMPONENT_TYPE]: (_data): IsPickupableComponent => {
-    // Componente marker, non ha dati specifici da validare qui
-    return { type: PICKUPABLE_COMPONENT_TYPE };
+  [PICKUPABLE_COMPONENT_TYPE]: (data: any): IsPickupableComponent => {
+    return {
+      type: PICKUPABLE_COMPONENT_TYPE,
+      pickableWhenInstalled: data.pickableWhenInstalled,
+    };
   },
 
   [BUTTON_STATE_COMPONENT_TYPE]: (data): ButtonStateComponent | null => {
@@ -259,7 +261,6 @@ export function loadWorldStateFromFile(filePath: string): WorldType {
       throw new Error(`File not found at ${resolvedPath}`);
     }
     const jsonContent = fs.readFileSync(resolvedPath, 'utf-8');
-    console.log(`JSON content: ${jsonContent}`);
     return loadWorldStateFromJson(jsonContent);
   } catch (error) {
     console.error(`Failed to load world state from file ${filePath}:`, error);

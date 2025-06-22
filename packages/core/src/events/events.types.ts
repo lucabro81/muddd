@@ -21,17 +21,21 @@ export enum EventType {
   ITEM_PICKED_UP = 'ItemPickedUp',
   ITEM_DROPPED = 'ItemDropped',
   BUTTON_PUSHED = 'ButtonPushed',
-  ITEM_PLACED = 'ItemPlaced',
   EXAMINE_COMMAND = 'ExamineCommand',
   PUT_COMMAND = 'PutCommand',
   USE_COMMAND = 'UseCommand',
   ENTITY_UNLOCKED = 'EntityUnlocked',
   ITEM_USED = 'ItemUsed',
   COMMAND_FAILED = 'CommandFailed',
+  ITEM_SOCKETED = 'ItemSocketed',
 }
 
 export enum CommandFailureReason {
-  EXIT_LOCKED = 'ExitLocked',
+  TARGET_NOT_FOUND = 'TARGET_NOT_FOUND',
+  DIRECTION_NOT_FOUND = 'DIRECTION_NOT_FOUND',
+  EXIT_NOT_FOUND = 'EXIT_NOT_FOUND',
+  EXIT_LOCKED = 'EXIT_LOCKED',
+  ITEM_NOT_USABLE_ON_TARGET = 'ITEM_NOT_USABLE_ON_TARGET'
 }
 
 export interface BaseEvent {
@@ -97,6 +101,7 @@ export interface ItemPickedUpEvent extends BaseEvent {
   type: EventType.ITEM_PICKED_UP;
   actorId: EntityId;
   itemId: EntityId;
+  roomId: EntityId;
 }
 
 export interface InventoryCommandEvent extends BaseEvent {
@@ -109,13 +114,6 @@ export interface PutCommandEvent extends BaseEvent {
   actorId: EntityId;
   itemKeywords: string;
   targetKeywords: string;
-}
-
-export interface ItemPlacedEvent extends BaseEvent {
-  type: EventType.ITEM_PLACED;
-  actorId: EntityId;
-  itemId: EntityId;
-  targetId: EntityId;
 }
 
 export interface ExamineCommandEvent extends BaseEvent {
@@ -133,6 +131,13 @@ export interface UseCommandEvent extends BaseEvent {
 
 export interface ItemUsedEvent extends BaseEvent {
   type: EventType.ITEM_USED;
+  actorId: EntityId;
+  itemId: EntityId;
+  targetId: EntityId;
+}
+
+export interface ItemSocketedEvent extends BaseEvent {
+  type: EventType.ITEM_SOCKETED;
   actorId: EntityId;
   itemId: EntityId;
   targetId: EntityId;
@@ -162,9 +167,9 @@ export type GameEvent =
   | ItemPickedUpEvent
   | InventoryCommandEvent
   | PutCommandEvent
-  | ItemPlacedEvent
   | ExamineCommandEvent
   | UseCommandEvent
   | EntityUnlockedEvent
   | ItemUsedEvent
+  | ItemSocketedEvent
   | CommandFailedEvent;

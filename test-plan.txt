@@ -21,4 +21,36 @@ Our goal is to test that our state changes work exactly as expected. We'll focus
 
 4.  **Description Engine (`description-engine.ts`)**: We'll test the prompt, not the LLM's output.
     *   Given a state with open and locked exits, does the engine generate a prompt string containing both a "Uscite aperte" section and a "Passaggi bloccati" section?
-    *   Given a state with hidden items, does the prompt correctly include or exclude them based on the player's perception and known items? 
+    *   Given a state with hidden items, does the prompt correctly include or exclude them based on the player's perception and known items?
+
+## Refactor `use` Command and Reducers (TDD)
+
+Objective: Refactor the `use` command logic to be more component-driven and scalable, following a Test-Driven Development approach. This replaces the original plan for `itemPlacedReducer`.
+
+1.  **Define `ItemSocketedEvent`**:
+    -   Create the `ItemSocketedEvent` type in `events.types.ts`.
+
+2.  **Create `itemSocketedReducer` Shell**:
+    -   Add a placeholder (empty) function for `itemSocketedReducer` in `state-reducers.ts`.
+
+3.  **Write Failing Test for `itemSocketedReducer`**:
+    -   In `state-reducers.test.ts`, write a comprehensive test for `itemSocketedReducer`.
+    -   The test should simulate using an item on a socket.
+    -   Assert that the target's `SocketComponent` is correctly updated (`isOccupied: true`).
+    -   Assert that the item's state is updated correctly (e.g., location change).
+    -   This test is expected to fail initially.
+
+4.  **Implement `itemSocketedReducer`**:
+    -   Write the full implementation of `itemSocketedReducer` to make the test from the previous step pass.
+    -   The logic can be adapted from the old `itemPlacedReducer`.
+
+5.  **Refactor `state-dispatcher`**:
+    -   Modify `applyEvent` in `state-dispatcher.ts`.
+    -   The handler for `EventType.ITEM_USED` will now be a "router":
+        - It inspects the components of the target entity.
+        - If the target has a `SocketComponent` that accepts the item, it should recursively call `applyEvent` with a new `ItemSocketedEvent`.
+    -   The new `ItemSocketedEvent` case will call the `itemSocketedReducer`.
+    -   Remove the old `itemPlacedReducer` and its related event (`ItemPlacedEvent`).
+
+6.  **Write Tests for `state-dispatcher` Refactoring**:
+    -   Add a test to `state-dispatcher.test.ts` to verify the new routing logic for `ITEM_USED` events. 

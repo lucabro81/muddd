@@ -27,13 +27,14 @@ import {
   LookRoomEvent,
   EntityUnlockedEvent,
   CommandFailedEvent,
-  CommandFailureReason
+  CommandFailureReason,
+  ItemSocketedEvent
 } from '../events/events.types.js';
 import {
   entityMoveReducer,
   entityUnlockedReducer,
   itemPickedUpReducer,
-  itemPlacedReducer,
+  itemSocketedReducer,
   playerDiscoveredItemReducer
 } from './state-reducers.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -210,18 +211,28 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       return playerDiscoveredItemReducer(currentState, event);
     case EventType.ITEM_PICKED_UP:
       return itemPickedUpReducer(currentState, event);
-    case EventType.ITEM_PLACED:
-      return itemPlacedReducer(currentState, event);
+    case EventType.ITEM_SOCKETED:
+      return itemSocketedReducer(currentState, event);
     case EventType.ENTITY_UNLOCKED:
       return entityUnlockedReducer(currentState, event);
     case EventType.ITEM_USED:
-      // TODO: This is where we can expand the logic for different item uses.
-      // For now, it only handles the "socket" mechanic.
       const { actorId: userActorId, itemId, targetId } = event;
       const targetSocket = getComponent<SocketComponent>(currentState, targetId, SOCKET_COMPONENT_TYPE);
 
       if (targetSocket && targetSocket.acceptsItemId === itemId) {
-        // Correct item used on the socket, fire unlock event and process it immediately.
+        // Correct item used on the socket. Fire the specific ItemSocketedEvent.
+        const socketEvent: ItemSocketedEvent = {
+          id: uuidv4(),
+          type: EventType.ITEM_SOCKETED,
+          timestamp: Date.now(),
+          actorId: userActorId,
+          itemId,
+          targetId,
+        };
+        // Recursively apply the new event to change the state
+        const stateAfterSocket = applyEvent(currentState, socketEvent);
+
+        // After socketing, we can also fire the unlock event.
         const unlockEvent: EntityUnlockedEvent = {
           id: uuidv4(),
           type: EventType.ENTITY_UNLOCKED,
@@ -229,13 +240,12 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
           actorId: userActorId,
           entityId: targetSocket.unlocksGateEntityId,
         };
-        gameEventEmitter.emit(EventType.ENTITY_UNLOCKED, unlockEvent); // Still emit for listeners
-        return applyEvent(currentState, unlockEvent); // Recursively apply the new event
+        gameEventEmitter.emit(EventType.ENTITY_UNLOCKED, unlockEvent); // Emit for external listeners
+        return applyEvent(stateAfterSocket, unlockEvent); // Chain the next state change
       }
 
       // If the check fails, handle incorrect item usage.
-      // TODO: Fire a "CommandFailed" event
-      console.log(`[applyEvent] Item ${itemId} cannot be used on ${targetId}.`);
+      fireCommandFailedEvent(userActorId, CommandFailureReason.ITEM_NOT_USABLE_ON_TARGET);
       return currentState; // No state change on failure
     case EventType.PLAYER_COMMAND:
       const verb = event.verb?.toLowerCase();

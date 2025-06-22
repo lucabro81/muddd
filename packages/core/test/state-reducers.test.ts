@@ -1,8 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadWorldStateFromFile } from '../src/utils/world-loader.js';
-import { WorldType, EntityId, LOCKED_COMPONENT_TYPE, IComponent } from '../src/common/types.js';
-import { EntityUnlockedEvent, EventType } from '../src/events/events.types.js';
-import { entityUnlockedReducer } from '../src/state/state-reducers.js';
+import { loadWorldStateFromFile } from '../src/utils/world-loader';
+import { entityUnlockedReducer, itemSocketedReducer } from '../src/state/state-reducers';
+import {
+  WorldType,
+  EntityId,
+  LOCKED_COMPONENT_TYPE,
+  INVENTORY_COMPONENT_TYPE,
+  InventoryComponent,
+  LOCATION_COMPONENT_TYPE,
+  SOCKET_COMPONENT_TYPE,
+  SocketComponent,
+  PICKUPABLE_COMPONENT_TYPE,
+  IComponent
+} from '../src/common/types';
+import {
+  EntityUnlockedEvent,
+  EventType,
+  ItemSocketedEvent
+} from '../src/events/events.types';
 
 const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 
@@ -48,6 +63,81 @@ describe('State Reducers', () => {
 
       // 4. Other entities unchanged: Verify a different entity is untouched
       expect(nextState.get('porta_dell_inferno')).toEqual(initialState.get('porta_dell_inferno'));
+    });
+  });
+
+  describe('itemSocketedReducer', () => {
+    const actorId: EntityId = 'player_test';
+    const itemId: EntityId = 'frammento_iscrizione_infernale';
+    const targetId: EntityId = 'architrave_con_iscrizione';
+    let testState: WorldType;
+
+    beforeEach(() => {
+      // ARRANGE: Create a test-specific state where the player has the item.
+      const playerComponents = new Map(initialState.get(actorId)!);
+      const playerInventory = playerComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const nextPlayerInventory: InventoryComponent = {
+        ...playerInventory,
+        items: [...playerInventory.items, itemId],
+      };
+      playerComponents.set(INVENTORY_COMPONENT_TYPE, nextPlayerInventory);
+
+      const itemComponents = new Map(initialState.get(itemId)!);
+      itemComponents.delete(LOCATION_COMPONENT_TYPE); // Item is in inventory, not in a room
+
+      const roomComponents = new Map(initialState.get('porta_dell_inferno')!);
+      const roomInventory = roomComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const nextRoomInventory: InventoryComponent = {
+        ...roomInventory,
+        items: roomInventory.items.filter(id => id !== itemId),
+      };
+      roomComponents.set(INVENTORY_COMPONENT_TYPE, nextRoomInventory);
+
+      // Create the state copy for the test
+      testState = new Map(initialState);
+      testState.set(actorId, playerComponents);
+      testState.set(itemId, itemComponents);
+      testState.set('porta_dell_inferno', roomComponents);
+
+      // Sanity check preconditions
+      const prePlayerInv = testState.get(actorId)!.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      expect(prePlayerInv.items).toContain(itemId);
+      const preSocket = testState.get(targetId)!.get(SOCKET_COMPONENT_TYPE) as SocketComponent;
+      expect(preSocket.isOccupied).toBe(false);
+    });
+
+    it('should correctly socket the item, updating actor, item, and target states', () => {
+      // Arrange: Create the event
+      const event: ItemSocketedEvent = {
+        id: 'test-socket-evt-1',
+        type: EventType.ITEM_SOCKETED,
+        timestamp: Date.now(),
+        actorId,
+        itemId,
+        targetId,
+      };
+
+      // Action: Apply the event using the (currently empty) reducer
+      const nextState = itemSocketedReducer(testState, event);
+
+      // Assert: Verify the new state
+      expect(nextState).not.toBe(testState); // Immutability
+
+      // 1. Target (Socket) State
+      const nextTarget = nextState.get(targetId)!;
+      const nextSocket = nextTarget.get(SOCKET_COMPONENT_TYPE) as SocketComponent;
+      expect(nextSocket.isOccupied).toBe(true);
+
+      // 2. Actor (Player) State
+      const nextActor = nextState.get(actorId)!;
+      const nextActorInventory = nextActor.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      expect(nextActorInventory.items).not.toContain(itemId);
+
+      // 3. Item State
+      const nextItem = nextState.get(itemId)!;
+      console.log("nextItem: ");
+      console.dir(nextItem, { depth: null, colors: true });
+      expect(nextItem.has(PICKUPABLE_COMPONENT_TYPE)).toBe(false); // Should become non-pickupable
     });
   });
 }); 

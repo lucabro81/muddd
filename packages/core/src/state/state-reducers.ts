@@ -16,7 +16,7 @@ import {
   IsPickupableComponent,
   LOCKED_COMPONENT_TYPE,
 } from '../common/types.js';
-import { EntityMoveEvent, ItemPlacedEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent, EntityUnlockedEvent } from '../events/events.types.js';
+import { EntityMoveEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent, EntityUnlockedEvent, ItemSocketedEvent } from '../events/events.types.js';
 import util from 'util';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
@@ -59,7 +59,6 @@ export function entityMoveReducer(
   nextState.set(entityId, nextEntityComponents);
 
   // 5. Return the NEW complete state
-  console.log(`[entityMoveReducer] New state after moving entity ${entityId} to room ${destinationRoomId}: ${util.inspect(nextState)}`);
   return nextState;
 }
 
@@ -167,12 +166,12 @@ export function itemPickedUpReducer(
   return nextState;
 }
 
-export function itemPlacedReducer(
+export function itemSocketedReducer(
   currentState: WorldType,
-  event: ItemPlacedEvent
+  event: ItemSocketedEvent
 ): WorldType {
   const { actorId, itemId, targetId } = event;
-  console.log(`[itemPlacedReducer] Processing event for actor ${actorId} placing item ${itemId} in target ${targetId}`);
+  console.log(`[itemSocketedReducer] Processing event for actor ${actorId} placing item ${itemId} in target ${targetId}`);
 
   // --- 1. Get current state of all involved entities ---
   const actorComponents = currentState.get(actorId);
@@ -180,7 +179,7 @@ export function itemPlacedReducer(
   const targetComponents = currentState.get(targetId);
 
   if (!actorComponents || !itemComponents || !targetComponents) {
-    console.warn(`[itemPlacedReducer] Actor, Item, or Target not found. Aborting.`);
+    console.warn(`[itemSocketedReducer] Actor, Item, or Target not found. Aborting.`);
     return currentState;
   }
 
@@ -195,29 +194,20 @@ export function itemPlacedReducer(
   const nextActorComponents = new Map(actorComponents);
   nextActorComponents.set(INVENTORY_COMPONENT_TYPE, nextActorInventory);
 
-  // b. Update Target: Set socket to occupied and add item to its inventory
+  // b. Update Target: Set socket to occupied
   const currentSocket = targetComponents.get(SOCKET_COMPONENT_TYPE) as SocketComponent;
   const nextSocket: SocketComponent = {
     ...currentSocket,
     isOccupied: true,
   };
-  const currentTargetInventory = targetComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent | undefined;
-  const nextTargetInventory: InventoryComponent = {
-    type: INVENTORY_COMPONENT_TYPE,
-    items: [...(currentTargetInventory?.items || []), itemId],
-  };
   const nextTargetComponents = new Map(targetComponents);
   nextTargetComponents.set(SOCKET_COMPONENT_TYPE, nextSocket);
-  nextTargetComponents.set(INVENTORY_COMPONENT_TYPE, nextTargetInventory);
 
-  // c. Update Item: Remove its location, set visibility to 0, and handle pickupable
+  // c. Update Item: Remove its pickupable component if necessary
   const nextItemComponents = new Map(itemComponents);
-  nextItemComponents.delete(LOCATION_COMPONENT_TYPE);
-  // Set visibility to obvious
-  const visibilityComponent: IsVisibleComponent = { type: VISIBLE_COMPONENT_TYPE, level: 0 };
-  nextItemComponents.set(VISIBLE_COMPONENT_TYPE, visibilityComponent);
-  // Handle pickupable
-  const pickupable = itemComponents.get(PICKUPABLE_COMPONENT_TYPE) as IsPickupableComponent | undefined;
+  const pickupable = nextItemComponents.get(PICKUPABLE_COMPONENT_TYPE) as IsPickupableComponent | undefined;
+
+  // If the component exists and explicitly says it is not pickable when installed, remove it.
   if (pickupable && pickupable.pickableWhenInstalled === false) {
     nextItemComponents.delete(PICKUPABLE_COMPONENT_TYPE);
   }
@@ -228,7 +218,7 @@ export function itemPlacedReducer(
   nextState.set(targetId, nextTargetComponents);
   nextState.set(itemId, nextItemComponents);
 
-  console.log(`[itemPlacedReducer] Successfully placed item ${itemId} in target ${targetId}`);
+  console.log(`[itemSocketedReducer] Successfully placed item ${itemId} in target ${targetId}`);
   return nextState;
 }
 
