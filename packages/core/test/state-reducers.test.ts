@@ -1,23 +1,31 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { loadWorldStateFromFile } from '../src/utils/world-loader';
-import { entityUnlockedReducer, itemSocketedReducer } from '../src/state/state-reducers';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  WorldType,
   EntityId,
-  LOCKED_COMPONENT_TYPE,
+  IComponent,
   INVENTORY_COMPONENT_TYPE,
   InventoryComponent,
+  IsPresentInRoomComponent,
   LOCATION_COMPONENT_TYPE,
+  LOCKED_COMPONENT_TYPE,
+  PICKUPABLE_COMPONENT_TYPE,
   SOCKET_COMPONENT_TYPE,
   SocketComponent,
-  PICKUPABLE_COMPONENT_TYPE,
-  IComponent
+  WorldType
 } from '../src/common/types';
 import {
   EntityUnlockedEvent,
   EventType,
+  ItemDroppedEvent,
+  ItemPickedUpEvent,
   ItemSocketedEvent
 } from '../src/events/events.types';
+import {
+  entityUnlockedReducer,
+  itemDroppedReducer,
+  itemPickedUpReducer,
+  itemSocketedReducer
+} from '../src/state/state-reducers';
+import { loadWorldStateFromFile } from '../src/utils/world-loader';
 
 const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 
@@ -132,12 +140,63 @@ describe('State Reducers', () => {
       const nextActor = nextState.get(actorId)!;
       const nextActorInventory = nextActor.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
       expect(nextActorInventory.items).not.toContain(itemId);
-
-      // 3. Item State
       const nextItem = nextState.get(itemId)!;
-      console.log("nextItem: ");
-      console.dir(nextItem, { depth: null, colors: true });
-      expect(nextItem.has(PICKUPABLE_COMPONENT_TYPE)).toBe(false); // Should become non-pickupable
+      expect(nextItem.has(PICKUPABLE_COMPONENT_TYPE)).toBe(false);
+    });
+  });
+
+  describe('itemPickedUpReducer', () => {
+    it('should move an item from room inventory to player inventory and remove its location component', () => {
+
+      // ARRANGE
+      const actorId = 'player_test';
+      const itemId = 'frammento_iscrizione_infernale';
+      const roomId = 'porta_dell_inferno';
+
+      const pickupEvent: ItemPickedUpEvent = {
+        id: 'setup-pickup-event', type: EventType.ITEM_PICKED_UP, timestamp: Date.now(), actorId, itemId, roomId,
+      };
+      const finalState = itemPickedUpReducer(initialState, pickupEvent);
+
+      // ASSERT
+      const playerInventory = finalState.get(actorId)?.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const roomInventory = finalState.get(roomId)?.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const itemLocation = finalState.get(itemId)?.get(LOCATION_COMPONENT_TYPE) as IsPresentInRoomComponent;
+
+      expect(playerInventory.items).toContain(itemId);
+      expect(roomInventory.items).not.toContain(itemId);
+      expect(itemLocation).toBeUndefined();
+    });
+  });
+
+  describe('itemDroppedReducer', () => {
+    it('should move an item from player inventory to room inventory and add a location component', () => {
+
+      // ARRANGE
+      const actorId = 'player_test';
+      const itemId = 'frammento_iscrizione_infernale';
+      const roomId = 'porta_dell_inferno';
+
+      const pickupEvent: ItemPickedUpEvent = {
+        id: 'setup-pickup-event', type: EventType.ITEM_PICKED_UP, timestamp: Date.now(), actorId, itemId, roomId,
+      };
+      const stateWithItemInInventory = itemPickedUpReducer(initialState, pickupEvent);
+
+      // ACTION
+      const dropEvent: ItemDroppedEvent = {
+        id: 'event-id', type: EventType.ITEM_DROPPED, timestamp: Date.now(), actorId, itemId, roomId,
+      };
+      const finalState = itemDroppedReducer(stateWithItemInInventory, dropEvent);
+
+      // ASSERT
+      const playerInventory = finalState.get(actorId)?.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const roomInventory = finalState.get(roomId)?.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+      const itemLocation = finalState.get(itemId)?.get(LOCATION_COMPONENT_TYPE) as IsPresentInRoomComponent;
+
+      expect(playerInventory.items).not.toContain(itemId);
+      expect(roomInventory.items).toContain(itemId);
+      expect(itemLocation).toBeDefined();
+      expect(itemLocation.roomId).toBe(roomId);
     });
   });
 }); 

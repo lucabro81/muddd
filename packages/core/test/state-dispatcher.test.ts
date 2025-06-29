@@ -84,3 +84,76 @@ describe('State Dispatcher (applyEvent)', () => {
 
   // TODO: Add specific tests for other reducers when they are implemented
 });
+
+describe('applyEvent exhaustiveness', () => {
+  // Events that have a dedicated, simple reducer function
+  const stateChangingReducerEvents: EventType[] = [
+    EventType.ENTITY_MOVE,
+    EventType.PLAYER_DISCOVERED_ITEM,
+    EventType.ITEM_PICKED_UP,
+    EventType.ITEM_SOCKETED,
+    EventType.ENTITY_UNLOCKED,
+  ];
+
+  // Events handled by custom logic within the applyEvent switch statement
+  const customLogicEvents: EventType[] = [
+    EventType.ITEM_USED,
+    EventType.PLAYER_COMMAND,
+  ];
+
+  // Events that are intentionally not handled by a state-changing case
+  // and should fall through to the default case, returning the state unmodified.
+  // These are typically command intents or purely informational events.
+  const nonStateChangingEvents: EventType[] = [
+    EventType.UNKNOWN_COMMAND,
+    EventType.LOOK_COMMAND,
+    EventType.GO_COMMAND,
+    EventType.GET_COMMAND,
+    EventType.DROP_COMMAND,
+    EventType.INVENTORY_COMMAND,
+    EventType.PUSH_COMMAND,
+    EventType.PLAYER_ENTERED_ROOM,
+    EventType.PLAYER_LEFT_ROOM,
+    EventType.LOOK_TARGET,
+    EventType.ITEM_GET,
+    EventType.LOOK_ROOM,
+    EventType.SEARCH_COMMAND,
+    EventType.PICKUP_COMMAND,
+    EventType.ITEM_DROPPED,
+    EventType.BUTTON_PUSHED,
+    EventType.EXAMINE_COMMAND,
+    EventType.PUT_COMMAND,
+    EventType.USE_COMMAND,
+    EventType.COMMAND_FAILED,
+  ];
+
+  it('should consciously handle every EventType', () => {
+    const allEventTypes = Object.values(EventType);
+
+    const allHandledEvents = [
+      ...stateChangingReducerEvents,
+      ...customLogicEvents,
+      ...nonStateChangingEvents,
+    ];
+
+    // This test ensures that if a new EventType is added, the developer
+    // must consciously decide how it should be handled by the dispatcher
+    // and add it to one of the lists above.
+    expect(new Set(allEventTypes)).toEqual(new Set(allHandledEvents));
+  });
+
+  it('should return the original state for non-state-changing event types', () => {
+    const currentState: WorldType = new Map();
+
+    nonStateChangingEvents.forEach(eventType => {
+      const event = {
+        id: `test-event-${eventType}`,
+        type: eventType,
+        timestamp: Date.now(),
+      };
+
+      const newState = applyEvent(currentState, event as GameEvent);
+      expect(newState).toBe(currentState);
+    });
+  });
+});

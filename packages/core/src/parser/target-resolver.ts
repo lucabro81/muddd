@@ -21,6 +21,10 @@ export function findTargetEntity(
   targetString: string
 ): EntityId | null | 'ambiguous' {
 
+  console.log(`[findTargetEntity] World state: ${JSON.stringify(worldState)}`);
+  console.log(`[findTargetEntity] Candidate entity IDs: ${JSON.stringify(candidateEntityIds)}`);
+  console.log(`[findTargetEntity] Target string: ${targetString}`);
+
   if (!targetString || candidateEntityIds.length === 0) {
     return null;
   }
@@ -32,6 +36,14 @@ export function findTargetEntity(
 
   for (const entityId of candidateEntityIds) {
     const description = getComponent<DescriptionComponent>(worldState, entityId, DESCRIPTION_COMPONENT_TYPE);
+
+    // If the target string is exactly the entity ID, we return it immediately
+    console.log(`[findTargetEntity] Entity ID: ${entityId}`);
+    console.log(`[findTargetEntity] Normalized target string: ${normalizedTargetString}`);
+    if (entityId === normalizedTargetString) {
+      return entityId;
+    }
+
     if (!description) {
       continue; // The candidate entity does not have a description, it cannot be targeted by name
     }

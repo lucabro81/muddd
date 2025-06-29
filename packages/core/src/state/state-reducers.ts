@@ -1,23 +1,18 @@
-// packages/core/src/state-reducers.ts
-
 import {
   INVENTORY_COMPONENT_TYPE,
   InventoryComponent,
+  IsPickupableComponent,
   IsPresentInRoomComponent,
   KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE,
   KnownHiddenItemsComponent,
   LOCATION_COMPONENT_TYPE,
-  SocketComponent,
-  SOCKET_COMPONENT_TYPE,
-  WorldType,
-  VISIBLE_COMPONENT_TYPE,
-  PICKUPABLE_COMPONENT_TYPE,
-  IsVisibleComponent,
-  IsPickupableComponent,
   LOCKED_COMPONENT_TYPE,
+  PICKUPABLE_COMPONENT_TYPE,
+  SOCKET_COMPONENT_TYPE,
+  SocketComponent,
+  WorldType
 } from '../common/types.js';
-import { EntityMoveEvent, ItemPickedUpEvent, PlayerDiscoveredItemEvent, EntityUnlockedEvent, ItemSocketedEvent } from '../events/events.types.js';
-import util from 'util';
+import { EntityMoveEvent, EntityUnlockedEvent, ItemDroppedEvent, ItemPickedUpEvent, ItemSocketedEvent, PlayerDiscoveredItemEvent } from '../events/events.types.js';
 /**
  * Manage the EntityMoveEvent event by updating the IsPresentInRoomComponent of the moved entity.
  * Operate in an immutable way, returning a new WorldType map.
@@ -163,6 +158,61 @@ export function itemPickedUpReducer(
   nextState.set(itemId, nextItemComponents);
 
   console.log(`[itemPickedUpReducer] Successfully moved item ${itemId} from room ${roomId} to actor ${actorId}`);
+  return nextState;
+}
+
+export function itemDroppedReducer(
+  currentState: WorldType,
+  event: ItemDroppedEvent
+): WorldType {
+  const { actorId, itemId, roomId } = event;
+  console.log(`[itemDroppedReducer] Processing event for actor ${actorId} dropping item ${itemId} in room ${roomId}`);
+
+  // --- 1. Get current state of all involved entities ---
+  const actorComponents = currentState.get(actorId);
+  const itemComponents = currentState.get(itemId);
+  const roomComponents = currentState.get(roomId);
+
+  if (!actorComponents || !itemComponents || !roomComponents) {
+    console.warn(`[itemDroppedReducer] Actor, Item, or Room not found. Aborting.`);
+    return currentState;
+  }
+
+  // --- 2. Create the next state for all entities IMMUTABLY ---
+
+  // a. Update Actor: Remove item from inventory
+  const currentActorInventory = actorComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+  const nextActorInventory: InventoryComponent = {
+    ...currentActorInventory,
+    items: currentActorInventory.items.filter(id => id !== itemId),
+  };
+  const nextActorComponents = new Map(actorComponents);
+  nextActorComponents.set(INVENTORY_COMPONENT_TYPE, nextActorInventory);
+
+  // b. Update Room: Add item to inventory
+  const currentRoomInventory = roomComponents.get(INVENTORY_COMPONENT_TYPE) as InventoryComponent;
+  const nextRoomInventory: InventoryComponent = {
+    ...currentRoomInventory,
+    items: [...currentRoomInventory.items, itemId],
+  };
+  const nextRoomComponents = new Map(roomComponents);
+  nextRoomComponents.set(INVENTORY_COMPONENT_TYPE, nextRoomInventory);
+
+  // c. Update Item: Add a location component to it
+  const nextItemComponents = new Map(itemComponents);
+  const newLocationComponent: IsPresentInRoomComponent = {
+    type: LOCATION_COMPONENT_TYPE,
+    roomId,
+  };
+  nextItemComponents.set(LOCATION_COMPONENT_TYPE, newLocationComponent);
+
+  // --- 3. Assemble the final world state ---
+  const nextState = new Map(currentState);
+  nextState.set(actorId, nextActorComponents);
+  nextState.set(roomId, nextRoomComponents);
+  nextState.set(itemId, nextItemComponents);
+
+  console.log(`[itemDroppedReducer] Successfully moved item ${itemId} from actor ${actorId} to room ${roomId}`);
   return nextState;
 }
 

@@ -14,7 +14,7 @@
     "start": "node --env-file .env dist/server.js",
     "dev": "nodemon --exec \"node --env-file .env --loader ts-node/esm --require tsconfig-paths/register src/server.ts\"",
     "build": "rimraf ./dist && tsc",
-    "test": "vitest run",
+    "test": "OLLAMA_BASE_URL=http://test OLLAMA_MODEL=test vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {

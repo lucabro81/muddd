@@ -40,6 +40,8 @@ import {
   UseCommandEvent,
   CommandFailedEvent,
   CommandFailureReason,
+  DropCommandEvent,
+  ItemDroppedEvent,
 } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
@@ -284,6 +286,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
 
   gameEventEmitter.on<PickupCommandEvent>(EventType.PICKUP_COMMAND, async (event) => {
     const { actorId, targetKeywords } = event;
+    console.log(`[PickupCommand] Received for actor ${actorId} with keywords "${targetKeywords}"`);
     server.log.info(`[PickupCommand] Received for actor ${actorId} with keywords "${targetKeywords}"`);
 
     if (!worldState) return;
@@ -296,6 +299,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
         break;
       }
     }
+
     if (!clientData) {
       server.log.warn(`[PickupCommand] Could not find client for actor ${actorId}`);
       return;
@@ -314,38 +318,22 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
       return;
     }
 
-    // 3. Find the target item in the room
-    // This is a simplified version of the "findEntityByKeywords" logic.
-    // It finds the first visible item in the room that matches the keywords.
+    // // 3. Find the target item in the room
+    const targetItemId = findTargetEntity(worldState, roomInventory.items, targetKeywords);
+    if (!targetItemId || targetItemId === 'ambiguous') {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non trovi nessun oggetto che corrisponda a "${targetKeywords}".` }));
+      return;
+    }
+
+    // 4. Validate and fire state-changing event
     const perception = getComponent<PerceptionComponent>(worldState, actorId, PERCEPTION_COMPONENT_TYPE);
     const knownHiddenItems = getComponent<KnownHiddenItemsComponent>(worldState, actorId, KNOWN_HIDDEN_ITEMS_COMPONENT_TYPE);
     const sightLevel = perception?.sightLevel ?? 0;
     const knownItemIds = knownHiddenItems?.itemIds ?? [];
-    let targetItemId: EntityId | null = null;
-
-    const searchTerms = targetKeywords.toLowerCase().split(' ').filter(t => t);
-
-    for (const itemId of roomInventory.items) {
-      const visibility = getComponent<IsVisibleComponent>(worldState, itemId, VISIBLE_COMPONENT_TYPE);
-      const isVisible = (visibility?.level ?? 0) <= sightLevel || knownItemIds.includes(itemId);
-
-      if (isVisible) {
-        const description = getComponent<DescriptionComponent>(worldState, itemId, DESCRIPTION_COMPONENT_TYPE);
-        if (description) {
-          const entityKeywords = description.keywords.map(k => k.toLowerCase());
-          const isMatch = searchTerms.every(term => entityKeywords.some(keyword => keyword.includes(term)));
-          if (isMatch) {
-            targetItemId = itemId;
-            break; // Found our item
-          }
-        }
-      }
-    }
-
-
-    // 4. Validate and fire state-changing event
-    if (!targetItemId) {
-      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non vedi "${targetKeywords}" qui.` }));
+    const visibility = getComponent<IsVisibleComponent>(worldState, targetItemId, VISIBLE_COMPONENT_TYPE);
+    const isVisible = (visibility?.level ?? 0) <= sightLevel || knownItemIds.includes(targetItemId);
+    if (!isVisible) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non riesci a vedere nessun oggetto che corrisponda a "${targetKeywords}".` }));
       return;
     }
 
@@ -683,7 +671,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     const visibility = getComponent<IsVisibleComponent>(worldState, targetEntityId, VISIBLE_COMPONENT_TYPE);
     const isVisible = (visibility?.level ?? 0) <= sightLevel || knownItemIds.includes(targetEntityId);
     if (!isVisible) {
-      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non riesci a esaminare "${targetKeywords}".` }));
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: `Non riesci a esaminare nessun oggetto che corrisponda a "${targetKeywords}".` }));
       return;
     }
 
@@ -702,6 +690,69 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Ma
     if (clientConnections.has(clientData.connectionId)) {
       clientData.connection.send(JSON.stringify({ type: 'text', payload: '\n' }));
     }
+  });
+
+  gameEventEmitter.on<DropCommandEvent>(EventType.DROP_COMMAND, async (event) => {
+    server.log.info(`[DropCommand] Received event: ${event.type}`);
+
+    const { actorId, targetKeywords } = event;
+    if (!worldState) return;
+
+    // 1. Find the player's connection
+    let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+
+    if (!clientData) {
+      server.log.warn(`[DropCommand] Could not find client connection for actor ${actorId}`);
+      return;
+    }
+
+    // 2. Find the player's location and inventory
+    const location = getComponent<IsPresentInRoomComponent>(worldState, actorId, LOCATION_COMPONENT_TYPE);
+    if (!location) {
+      // This case should ideally not happen if the player is in the world.
+      server.log.error(`[DropCommand] Actor ${actorId} has no location.`);
+      return;
+    }
+    const roomId = location.roomId;
+    const playerInventory = getComponent<InventoryComponent>(worldState, actorId, INVENTORY_COMPONENT_TYPE);
+    if (!playerInventory || playerInventory.items.length === 0) {
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: "You aren't carrying anything." }));
+      return;
+    }
+
+    // 3. Resolve the target item from the player's inventory
+    const targetItemId = findTargetEntity(worldState, playerInventory.items, targetKeywords);
+
+    if (!targetItemId || targetItemId === 'ambiguous') {
+      const reason = targetItemId === 'ambiguous'
+        ? "You're carrying more than one of those. Be more specific."
+        : "You aren't carrying that.";
+      clientData.connection.send(JSON.stringify({ type: 'text', payload: reason }));
+      return;
+    }
+
+    // 4. Fire the ItemDroppedEvent for the state change
+    const itemDroppedEvent: ItemDroppedEvent = {
+      id: uuidv4(),
+      type: EventType.ITEM_DROPPED,
+      timestamp: Date.now(),
+      actorId,
+      itemId: targetItemId,
+      roomId,
+    };
+    gameEventEmitter.emit(EventType.ITEM_DROPPED, itemDroppedEvent);
+
+    // 5. Send feedback to the player
+    const itemDescription = getComponent<DescriptionComponent>(worldState, targetItemId, DESCRIPTION_COMPONENT_TYPE);
+    const itemName = itemDescription?.name ?? 'the item';
+    clientData.connection.send(JSON.stringify({ type: 'text', payload: `You drop ${itemName}.` }));
+
   });
 }
 

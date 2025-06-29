@@ -9,13 +9,15 @@ import {
   PutCommandEvent,
   SearchCommandEvent,
   ExamineCommandEvent,
-  UseCommandEvent
+  UseCommandEvent,
+  DropCommandEvent,
 } from '../events/events.types.js';
 
 // Define known verbs
 const searchVerbs: string[] = ['search', 'cerca', 'esplora', 'perquisisci', 'explore'];
 const pickupVerbs: string[] = ['pick', 'prendi', 'raccogli', 'take', 'get'];
 const inventoryVerbs: string[] = ['inventory', 'inventario', 'inv', 'i'];
+const dropVerbs: string[] = ['drop', 'lascia', 'getta', 'molla'];
 const putVerbs: string[] = ['put', 'metti', 'inserisci', 'place'];
 const examineVerbs: string[] = ['examine', 'esamina', 'inspect', 'guarda', 'osserva', 'analizza'];
 const useVerbs: string[] = ['use', 'usa'];
@@ -78,6 +80,21 @@ export function parseCommand(rawInput: string, context: CommandParserContext): G
     };
     console.log('[parseCommand] Parsed as InventoryCommandEvent:', inventoryEvent);
     return inventoryEvent;
+  }
+
+  if (dropVerbs.includes(verb)) {
+    if (argString.length === 0) {
+      return null;
+    }
+    const dropEvent: DropCommandEvent = {
+      id: uuidv4(),
+      type: EventType.DROP_COMMAND,
+      timestamp: Date.now(),
+      actorId: context.actorId,
+      targetKeywords: argString,
+    };
+    console.log('[parseCommand] Parsed as DropCommandEvent:', dropEvent);
+    return dropEvent;
   }
 
   if (putVerbs.includes(verb)) {

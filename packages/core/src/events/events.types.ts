@@ -28,6 +28,7 @@ export enum EventType {
   ITEM_USED = 'ItemUsed',
   COMMAND_FAILED = 'CommandFailed',
   ITEM_SOCKETED = 'ItemSocketed',
+  ITEM_PLACED = 'ItemPlaced',
 }
 
 export enum CommandFailureReason {
@@ -101,7 +102,6 @@ export interface ItemPickedUpEvent extends BaseEvent {
   type: EventType.ITEM_PICKED_UP;
   actorId: EntityId;
   itemId: EntityId;
-  roomId: EntityId;
 }
 
 export interface InventoryCommandEvent extends BaseEvent {
@@ -143,6 +143,13 @@ export interface ItemSocketedEvent extends BaseEvent {
   targetId: EntityId;
 }
 
+export interface ItemPlacedEvent extends BaseEvent {
+  type: EventType.ITEM_PLACED;
+  actorId: EntityId;
+  itemId: EntityId;
+  targetId: EntityId;
+}
+
 export interface EntityUnlockedEvent extends BaseEvent {
   type: EventType.ENTITY_UNLOCKED;
   entityId: EntityId;
@@ -153,6 +160,19 @@ export interface CommandFailedEvent extends BaseEvent {
   type: EventType.COMMAND_FAILED;
   actorId: EntityId;
   reason: CommandFailureReason;
+}
+
+export interface DropCommandEvent extends BaseEvent {
+  type: EventType.DROP_COMMAND;
+  actorId: EntityId;
+  targetKeywords: string;
+}
+
+export interface ItemDroppedEvent extends BaseEvent {
+  type: EventType.ITEM_DROPPED;
+  actorId: EntityId;
+  itemId: EntityId;
+  roomId: EntityId;
 }
 
 export type GameEvent =
@@ -172,4 +192,7 @@ export type GameEvent =
   | EntityUnlockedEvent
   | ItemUsedEvent
   | ItemSocketedEvent
-  | CommandFailedEvent;
+  | CommandFailedEvent
+  | DropCommandEvent
+  | ItemDroppedEvent
+  | ItemPlacedEvent;

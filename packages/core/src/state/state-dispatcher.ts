@@ -34,6 +34,7 @@ import {
   entityMoveReducer,
   entityUnlockedReducer,
   itemPickedUpReducer,
+  itemDroppedReducer,
   itemSocketedReducer,
   playerDiscoveredItemReducer
 } from './state-reducers.js';
@@ -211,6 +212,8 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       return playerDiscoveredItemReducer(currentState, event);
     case EventType.ITEM_PICKED_UP:
       return itemPickedUpReducer(currentState, event);
+    case EventType.ITEM_DROPPED:
+      return itemDroppedReducer(currentState, event);
     case EventType.ITEM_SOCKETED:
       return itemSocketedReducer(currentState, event);
     case EventType.ENTITY_UNLOCKED:

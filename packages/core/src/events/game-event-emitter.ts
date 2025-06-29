@@ -31,6 +31,10 @@ class GameEventEmitter extends EventEmitter2 {
   }
 
   // Potresti aggiungere metodi specifici per `once`, `off`, ecc.
+  public removeAllListeners(): this {
+    super.removeAllListeners();
+    return this;
+  }
 }
 
 // Esporta una singola istanza (Singleton pattern) o la classe stessa
