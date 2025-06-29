@@ -15,6 +15,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { setGameEventEmitter } from '../src/game-event-emitter';
+import { ClientConnetionMap } from '../src/events-handlers/types';
 
 const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 
@@ -57,7 +58,7 @@ describe('Command Handlers', () => {
     ]);
 
     // Initialize the command handlers with the current world state
-    setGameEventEmitter(worldState, mockClientConnections);
+    setGameEventEmitter(worldState, mockClientConnections as unknown as ClientConnetionMap);
   });
 
   describe('dropCommandHandler', () => {

@@ -1,12 +1,12 @@
+import fastifyWebsocket, { type WebSocket } from "@fastify/websocket";
+import { EntityId, type WorldType, loadWorldStateFromFile } from "core/main.js";
 import fastify, { type FastifyInstance } from "fastify";
-import { type WebSocket } from "@fastify/websocket";
-import path, { dirname } from "path";
 import fs from "fs";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import fastifyWebsocket from "@fastify/websocket";
-import { routes } from "./routes.js";
-import { EntityId, GameEvent, type WorldType, applyEvent, gameEventEmitter, loadWorldStateFromFile } from "core/main.js";
 import { setGameEventEmitter } from "./game-event-emitter.js";
+import { routes } from "./routes.js";
+import { ClientConnetionMap } from "./events-handlers/types.js";
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
@@ -30,7 +30,8 @@ export async function buildServer(worldState: WorldType | null): Promise<Fastify
     throw new Error('World state is not loaded');
   }
   await server.register(fastifyWebsocket);
-  setGameEventEmitter(worldState, clientConnections);
+  // FIXME: this is a hack to get the client connections to work, check types
+  setGameEventEmitter(worldState, clientConnections as unknown as ClientConnetionMap);
   routes(server, worldState, clientConnections);
   return server;
 }
