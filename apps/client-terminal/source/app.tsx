@@ -18,11 +18,11 @@ import {Box, Text, useInput, useApp} from 'ink';
 // import TextInput from 'ink-text-input';
 import WebSocket from 'ws';
 
-// Configurazioni
+// Configuration
 const SERVER_URL = process.env['MUD_SERVER_URL'] || 'ws://localhost:3000/ws';
 
 export default function App() {
-	const {exit} = useApp(); // Per uscire dall'app Ink
+	const {exit} = useApp(); // To exit the Ink app
 	const [isConnected, setIsConnected] = useState(false);
 	const [outputLines, setOutputLines] = useState<string[]>(['Connecting...']);
 	const [inputValue, setInputValue] = useState('');
@@ -47,36 +47,36 @@ export default function App() {
 				try {
 					const message = JSON.parse(rawMessage);
 
-					// Gestisci diversi tipi di messaggi strutturati
+					// Handle different types of structured messages
 					switch (message.type) {
-						case 'text': // Messaggio di testo semplice (benvenuto, echo, newline)
-						case 'error': // Messaggio di errore
+						case 'text': // Simple text message (welcome, echo, newline)
+						case 'error': // Error message
 							setOutputLines(prev => [...prev, message.payload]);
 							break;
 						case 'stream_chunk':
-							// Appendi il chunk all'ultima linea dell'output
+							// Append the chunk to the last line of the output
 							setOutputLines(prev => {
 								if (prev.length === 0) {
-									// Se non c'è output, inizia una nuova linea
+									// If there is no output, start a new line
 									return [message.payload];
 								}
 								const lastIndex = prev.length - 1;
-								// Crea un nuovo array per l'aggiornamento di stato di React
+								// Create a new array for React state update
 								const newOutput = [...prev];
-								// Modifica l'ultima linea aggiungendo il chunk
+								// Modify the last line by adding the chunk
 								newOutput[lastIndex] =
 									(newOutput[lastIndex] || '') + message.payload;
 								return newOutput;
 							});
 							break;
 						default:
-							// Messaggio non strutturato o tipo sconosciuto, aggiungilo com'è
+							// Unstructured or unknown message type, add it as is
 							console.warn('Received unhandled message format:', message);
 							setOutputLines(prev => [...prev, rawMessage]);
 							break;
 					}
 				} catch (e) {
-					// Se il messaggio non è JSON, trattalo come testo semplice
+					// If the message is not JSON, treat it as simple text
 					console.log('Received non-JSON message:', rawMessage);
 					setOutputLines(prev => [...prev, rawMessage]);
 				}
@@ -101,30 +101,30 @@ export default function App() {
 					...prev,
 					`--- WebSocket Error: ${error.message} ---`,
 				]);
-				// La chiusura verrà gestita dall'handler 'onclose'
+				// The closure will be handled by the 'onclose' handler
 			});
 		};
 
 		connectWebSocket();
 
-		// Funzione di cleanup per chiudere il WS quando il componente smonta
+		// Cleanup function to close the WS when the component unmounts
 		return () => {
 			console.log('Closing WebSocket connection...');
 			wsRef.current?.close();
 		};
-	}, []); // Esegui solo al mount
+	}, []); // Execute only on mount
 
-	// Hook per gestire l'input utente da terminale
+	// Hook to handle user input from the terminal
 	useInput((input, key) => {
 		if (key.return) {
-			// Invio premuto
+			// Pressed return
 			if (inputValue.trim() && wsRef.current && isConnected) {
 				const commandToSend = inputValue.trim();
-				// Aggiungi il comando inviato all'output per visibilità locale
+				// Add the sent command to the output for local visibility
 				setOutputLines(prev => [...prev, `> ${commandToSend}`]);
 				try {
 					wsRef.current.send(commandToSend);
-					setInputValue(''); // Pulisci input dopo l'invio
+					setInputValue(''); // Clear input after sending
 				} catch (err) {
 					console.error('Failed to send message:', err);
 					setOutputLines(prev => [
@@ -138,27 +138,27 @@ export default function App() {
 		} else if (key.delete || key.backspace) {
 			setInputValue(prev => prev.slice(0, -1));
 		} else if (!key.ctrl && !key.meta && !key.tab) {
-			// Ignora tasti speciali/modificatori
+			// Ignore special/modifier keys
 			setInputValue(prev => prev + input);
 		}
 
-		// Comando per uscire (esempio)
+		// Command to exit (example)
 		if (inputValue.toLowerCase() === '/quit') {
 			exit();
 		}
 	});
 
-	// Rendering dell'UI con Ink
+	// Rendering the Ink UI
 	return (
 		<Box flexDirection="column" width="100%" height="100%">
-			{/* Area Output (Scrollabile manualmente nel terminale per ora) */}
+			{/* Output area (manually scrollable in the terminal for now) */}
 			<Box flexDirection="column" flexGrow={1} overflowY="hidden">
-				{/* Mostra solo le ultime N righe per evitare overflow terminale */}
+				{/* Show only the last N lines to avoid terminal overflow */}
 				{outputLines.slice(-process.stdout.rows + 2).map((line, index) => (
 					<Text key={index}>{line}</Text>
 				))}
 			</Box>
-			{/* Riga Separatore e Input */}
+			{/* Separator line and Input */}
 			<Box
 				borderStyle="single"
 				paddingX={1}
