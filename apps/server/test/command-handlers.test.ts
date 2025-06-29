@@ -1,22 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  gameEventEmitter,
-  EventType,
   DropCommandEvent,
-  ItemDroppedEvent,
-  WorldType,
   EntityId,
+  EventType,
+  gameEventEmitter,
+  IComponent,
   INVENTORY_COMPONENT_TYPE,
   InventoryComponent,
-  LOCATION_COMPONENT_TYPE,
   IsPresentInRoomComponent,
-  IComponent,
+  ItemDroppedEvent,
   loadWorldStateFromFile,
-  PickupCommandEvent,
-  ItemPickedUpEvent
+  LOCATION_COMPONENT_TYPE,
+  WorldType
 } from 'core/main.js';
-import { setGameEventEmitter } from '../src/game-event-emitter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
+import { setGameEventEmitter } from '../src/game-event-emitter';
 
 const WORLD_FIXTURE_PATH = 'test/fixtures/test-world.json';
 

@@ -1,6 +1,6 @@
 # 1. Core Gameplay Loop:
 
-- ** DONE ** Implement the drop command.
+- **DONE** - Implement the drop command.
 - Design a system for NPC interactions, carefully considering the security and flow-control issues you raised for LLM-driven characters like Caronte.
 
 # 2. World Dynamism & Narrative:
@@ -16,8 +16,10 @@
 
 # 4. StateUpdatedEvent
 
-- Add a StateUpdatedEvent to the game event emitter.
+- **DONE** - Add a StateUpdatedEvent to the game event emitter.
 
 # 5. Testing:
 
-- Develop end-to-end tests for the client and server.
+- tests for changing state events.
+- tests for custom logic events.
+- tests for every command.

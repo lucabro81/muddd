@@ -28,7 +28,8 @@ import {
   EntityUnlockedEvent,
   CommandFailedEvent,
   CommandFailureReason,
-  ItemSocketedEvent
+  ItemSocketedEvent,
+  StateUpdatedEvent,
 } from '../events/events.types.js';
 import {
   entityMoveReducer,
@@ -398,5 +399,33 @@ export function applyEvent(currentState: WorldType, event: GameEvent): WorldType
       // returns the current state without modifications.
       console.log(`[applyEvent] No state reducer registered for event type: ${(event as GameEvent).type}`);
       return currentState;
+  }
+}
+
+/**
+ * Processes a game event, calculates the new state, and emits a StateUpdatedEvent if the state has changed.
+ * This function acts as a wrapper around applyEvent to centralize state change notification.
+ *
+ * @param currentState The current world state before the event.
+ * @param event The game event to process.
+ */
+export function processEvent(currentState: WorldType, event: GameEvent): void {
+  console.log(`[processEvent] Processing event: ${event.type}`);
+
+  const newState = applyEvent(currentState, event);
+
+  // By comparing object references, we can quickly check if the state was mutated.
+  // This relies on reducers returning the original state object if no changes were made.
+  if (newState !== currentState) {
+    console.log('[processEvent] State has changed. Emitting StateUpdatedEvent.');
+    const stateUpdatedEvent: StateUpdatedEvent = {
+      id: uuidv4(),
+      type: EventType.STATE_UPDATED,
+      timestamp: Date.now(),
+      newState: newState,
+    };
+    gameEventEmitter.emit(EventType.STATE_UPDATED, stateUpdatedEvent);
+  } else {
+    console.log('[processEvent] State has not changed. No event emitted.');
   }
 }

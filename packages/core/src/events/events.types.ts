@@ -1,4 +1,4 @@
-import { EntityId, RoomId, Timestamp } from '../common/types.js';
+import { EntityId, RoomId, Timestamp, WorldType } from '../common/types.js';
 
 export enum EventType {
   UNKNOWN_COMMAND = 'UnknownCommand',
@@ -29,6 +29,7 @@ export enum EventType {
   COMMAND_FAILED = 'CommandFailed',
   ITEM_SOCKETED = 'ItemSocketed',
   ITEM_PLACED = 'ItemPlaced',
+  STATE_UPDATED = 'StateUpdated',
 }
 
 export enum CommandFailureReason {
@@ -175,6 +176,11 @@ export interface ItemDroppedEvent extends BaseEvent {
   roomId: EntityId;
 }
 
+export interface StateUpdatedEvent extends BaseEvent {
+  type: EventType.STATE_UPDATED;
+  newState: WorldType;
+}
+
 export type GameEvent =
   | EntityMoveEvent
   | PlayerCommandEvent
@@ -195,4 +201,5 @@ export type GameEvent =
   | CommandFailedEvent
   | DropCommandEvent
   | ItemDroppedEvent
-  | ItemPlacedEvent;
+  | ItemPlacedEvent
+  | StateUpdatedEvent;

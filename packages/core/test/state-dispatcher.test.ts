@@ -93,6 +93,7 @@ describe('applyEvent exhaustiveness', () => {
     EventType.ITEM_PICKED_UP,
     EventType.ITEM_SOCKETED,
     EventType.ENTITY_UNLOCKED,
+    EventType.ITEM_PLACED
   ];
 
   // Events handled by custom logic within the applyEvent switch statement
@@ -125,6 +126,7 @@ describe('applyEvent exhaustiveness', () => {
     EventType.PUT_COMMAND,
     EventType.USE_COMMAND,
     EventType.COMMAND_FAILED,
+    EventType.STATE_UPDATED,
   ];
 
   it('should consciously handle every EventType', () => {

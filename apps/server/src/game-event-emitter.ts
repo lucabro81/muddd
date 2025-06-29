@@ -4,7 +4,7 @@ import {
   type WorldType,
   gameEventEmitter,
   type GameEvent,
-  applyEvent,
+  processEvent,
   EntityMoveEvent,
   LookTargetEvent,
   EntityId,
@@ -42,6 +42,7 @@ import {
   CommandFailureReason,
   DropCommandEvent,
   ItemDroppedEvent,
+  StateUpdatedEvent,
 } from "core/main.js"
 import { v4 as uuidv4 } from 'uuid';
 
@@ -56,26 +57,23 @@ const llmProvider = new OllamaProvider(ollamaBaseUrl);
 
 
 const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Map<string, { connection: WebSocket, playerId: EntityId, connectionId: string }>) => {
-  gameEventEmitter.on('*', async (event: GameEvent) => {
-    server.log.info(`[gameEventEmitter] Received event: ${event.type}`);
-    if (!worldState || !event?.type) return;
-
-    const stateBefore = worldState; // keep reference to the previous state
-    let stateAfter: WorldType;
-
-    try {
-      stateAfter = applyEvent(worldState, event);
-      worldState = stateAfter; // update the world state
-
-      if (stateBefore !== stateAfter) {
-        server.log.info(`World state updated after event ${event.type}. Entities: ${worldState.size}`);
-      }
-
-    } catch (error) {
-      server.log.error({ err: error, event }, `Error applying event type ${event.type}`);
-
+  gameEventEmitter.on('*', (event: GameEvent) => {
+    server.log.info(`[gameEventEmitter] Processing event: ${event.type}`);
+    if (!worldState || !event?.type || event.type === EventType.STATE_UPDATED) {
+      // Ignore state updates to prevent loops
       return;
     }
+
+    try {
+      processEvent(worldState, event);
+    } catch (error) {
+      server.log.error({ err: error, event }, `Error processing event type ${event.type}`);
+    }
+  });
+
+  gameEventEmitter.on<StateUpdatedEvent>(EventType.STATE_UPDATED, (event) => {
+    server.log.info(`[gameEventEmitter] World state updated. New state has ${event.newState.size} entities.`);
+    worldState = event.newState;
   });
 
   gameEventEmitter.on<EntityMoveEvent>(EventType.ENTITY_MOVE, async (event: EntityMoveEvent) => {
