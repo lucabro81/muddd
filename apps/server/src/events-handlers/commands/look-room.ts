@@ -1,6 +1,6 @@
 import { generateRoomDescription, LookRoomEvent, OllamaProvider, WorldType } from "core/main.js";
 import { ClientConnection, ClientConnetionMap } from "../types.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 
 export const lookRoomEventHandler = async (
   event: LookRoomEvent,
@@ -10,13 +10,7 @@ export const lookRoomEventHandler = async (
   llmModel: string,
 ) => {
   const { actorId, roomId } = event;
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
 
   if (clientData && worldState) {
     server.log.info(`Player ${actorId} is looking at room ${roomId}. Generating description stream...`);

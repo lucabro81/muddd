@@ -1,6 +1,6 @@
 import { generateEntityDescriptionStream, getComponent, INVENTORY_COMPONENT_TYPE, InventoryComponent, LookTargetEvent, OllamaProvider, WorldType } from "core/main.js";
 import { ClientConnection, ClientConnetionMap } from "../types.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 
 export const lookTargetEventHandler = async (
   event: LookTargetEvent,
@@ -10,13 +10,8 @@ export const lookTargetEventHandler = async (
   llmModel: string,
 ) => {
   const { actorId, targetEntityId } = event;
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
+
   if (clientData && worldState) {
     server.log.info(`Player ${actorId} is looking at ${targetEntityId}. Generating description stream...`);
     try {

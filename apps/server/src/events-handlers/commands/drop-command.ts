@@ -1,39 +1,33 @@
 import {
-  DropCommandEvent,
-  InventoryComponent,
-  LOCATION_COMPONENT_TYPE,
-  IsPresentInRoomComponent,
-  getComponent,
-  WorldType,
-  INVENTORY_COMPONENT_TYPE,
-  findTargetEntity,
-  ItemDroppedEvent,
-  EventType,
-  gameEventEmitter,
+  DESCRIPTION_COMPONENT_TYPE,
   DescriptionComponent,
-  DESCRIPTION_COMPONENT_TYPE
+  DropCommandEvent,
+  EventType,
+  findTargetEntity,
+  gameEventEmitter,
+  getComponent,
+  INVENTORY_COMPONENT_TYPE,
+  InventoryComponent,
+  IsPresentInRoomComponent,
+  ItemDroppedEvent,
+  LOCATION_COMPONENT_TYPE,
+  WorldType
 } from "core/main.js";
-import { server } from "../../utils.js";
-import { ClientConnection, ClientConnetionMap } from "../types.js";
 import { v4 as uuidv4 } from 'uuid';
+import { connectionsClientData, server } from "../../utils.js";
 
 export const dropCommandEventHandler = async (event: DropCommandEvent,
   worldState: WorldType | null,
-  clientConnections: ClientConnetionMap,
 ) => {
+  console.log(`[DropCommand] Received event: ${event.type}`);
   server.log.info(`[DropCommand] Received event: ${event.type}`);
 
   const { actorId, targetKeywords } = event;
   if (!worldState) return;
 
   // 1. Find the player's connection
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
+  console.log(`[DropCommand] Client data: ${clientData}`);
 
   if (!clientData) {
     server.log.warn(`[DropCommand] Could not find client connection for actor ${actorId}`);

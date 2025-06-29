@@ -18,7 +18,7 @@ import {
   WorldType
 } from "core/main.js";
 import { ClientConnection, ClientConnetionMap } from "../types.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 
 export const examineCommandEventHandler = async (event: ExamineCommandEvent,
   worldState: WorldType | null,
@@ -27,13 +27,7 @@ export const examineCommandEventHandler = async (event: ExamineCommandEvent,
   llmModel: string,
 ) => {
   const { actorId, targetKeywords } = event;
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
   if (!clientData || !worldState) return;
 
   // 1. Find player's location

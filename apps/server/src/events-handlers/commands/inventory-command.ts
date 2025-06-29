@@ -7,13 +7,11 @@ import {
   InventoryCommandEvent,
   WorldType
 } from "core/main.js";
-import { server } from "../../utils.js";
-import { ClientConnection, ClientConnetionMap } from "../types.js";
+import { connectionsClientData, server } from "../../utils.js";
 
 export const inventoryCommandEventHandler = async (
   event: InventoryCommandEvent,
   worldState: WorldType | null,
-  clientConnections: ClientConnetionMap,
 ) => {
   const { actorId } = event;
   server.log.info(`[InventoryCommand] Received for actor ${actorId}`);
@@ -21,13 +19,7 @@ export const inventoryCommandEventHandler = async (
   if (!worldState) return;
 
   // 1. Find player's connection
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
   if (!clientData) {
     server.log.warn(`[InventoryCommand] Could not find client for actor ${actorId}`);
     return;

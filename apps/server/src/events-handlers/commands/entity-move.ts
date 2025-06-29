@@ -1,20 +1,12 @@
-import { EntityId, EntityMoveEvent, EventType, gameEventEmitter, LookRoomEvent, WorldType } from "core/main.js";
-import { server } from "../../utils.js";
-import { ClientConnetionMap } from "../types.js";
+import { EntityMoveEvent, EventType, gameEventEmitter, LookRoomEvent, WorldType } from "core/main.js";
 import { v4 as uuidv4 } from 'uuid';
+import { connectionsClientData, server } from "../../utils.js";
 
-export const entityMoveEventHandler = (event: EntityMoveEvent, worldState: WorldType | null, clientConnections: ClientConnetionMap) => {
+export const entityMoveEventHandler = (event: EntityMoveEvent, worldState: WorldType | null) => {
   const playerId = event.entityId;
   const destinationRoomId = event.destinationRoomId;
 
-  // Find the websocket connection for this player
-  let clientData: { connection: WebSocket, playerId: EntityId, connectionId: string } | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === playerId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(playerId);
 
   if (clientData && worldState) { // Ensure the client is still connected and the state exists
     server.log.info(`Player ${playerId} moved to ${destinationRoomId}. Triggering LookRoomEvent.`);

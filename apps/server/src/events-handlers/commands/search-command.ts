@@ -4,14 +4,12 @@ import { InventoryComponent, INVENTORY_COMPONENT_TYPE } from "core/main.js";
 import { IsVisibleComponent, VISIBLE_COMPONENT_TYPE } from "core/main.js";
 import { EntityId } from "core/main.js";
 import { DescriptionComponent, DESCRIPTION_COMPONENT_TYPE } from "core/main.js";
-import { ClientConnection, ClientConnetionMap } from "../types.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 import { v4 as uuidv4 } from 'uuid';
 
 export const searchCommandEventHandler = async (
   event: SearchCommandEvent,
   worldState: WorldType | null,
-  clientConnections: ClientConnetionMap,
 ) => {
   server.log.info(`[SearchCommand] Received event: ${event.type}`);
 
@@ -19,13 +17,8 @@ export const searchCommandEventHandler = async (
   if (!worldState) return;
 
   // 1. Find the player's connection
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
+
   if (!clientData) {
     server.log.warn(`[SearchCommand] Could not find client connection for actor ${actorId}`);
     return;

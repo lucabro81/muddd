@@ -55,7 +55,7 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Cl
 
   // ENTITY_MOVE: this is the event that triggers the entity move
   gameEventEmitter.on<EntityMoveEvent>(EventType.ENTITY_MOVE,
-    (event: EntityMoveEvent) => entityMoveEventHandler(event, worldState, clientConnections));
+    (event: EntityMoveEvent) => entityMoveEventHandler(event, worldState));
 
   // LOOK_TARGET: light version of the @examine command
   gameEventEmitter.on<LookTargetEvent>(EventType.LOOK_TARGET,
@@ -67,35 +67,36 @@ const setGameEventEmitter = (worldState: WorldType | null, clientConnections: Cl
 
   // SEARCH_COMMAND: this is the event that triggers the search command
   gameEventEmitter.on<SearchCommandEvent>(EventType.SEARCH_COMMAND,
-    (event: SearchCommandEvent) => searchCommandEventHandler(event, worldState, clientConnections));
+    (event: SearchCommandEvent) => searchCommandEventHandler(event, worldState));
 
   // PICKUP_COMMAND: put an item in the player's inventory
   gameEventEmitter.on<PickupCommandEvent>(EventType.PICKUP_COMMAND,
-    (event: PickupCommandEvent) => pickCommandEventHandler(event, worldState, clientConnections));
+    (event: PickupCommandEvent) => pickCommandEventHandler(event, worldState));
 
   // INVENTORY_COMMAND: list the player's inventory
   gameEventEmitter.on<InventoryCommandEvent>(EventType.INVENTORY_COMMAND,
-    (event: InventoryCommandEvent) => inventoryCommandEventHandler(event, worldState, clientConnections));
+    (event: InventoryCommandEvent) => inventoryCommandEventHandler(event, worldState));
 
   // PUT_COMMAND: this is the event that triggers the put command @deprecated
   gameEventEmitter.on<PutCommandEvent>(EventType.PUT_COMMAND,
-    (event: PutCommandEvent) => putCommandEventHandler(event, worldState, clientConnections));
+    (event: PutCommandEvent) => putCommandEventHandler(event, worldState));
 
   // USE_COMMAND: use an item on an entity
   gameEventEmitter.on<UseCommandEvent>(EventType.USE_COMMAND,
-    (event: UseCommandEvent) => useCommandEventHandler(event, worldState, clientConnections));
+    (event: UseCommandEvent) => useCommandEventHandler(event, worldState));
 
   // COMMAND_FAILED: command failed
   gameEventEmitter.on<CommandFailedEvent>(EventType.COMMAND_FAILED,
-    (event: CommandFailedEvent) => commandFailedEventHandler(event, worldState, clientConnections));
+    (event: CommandFailedEvent) => commandFailedEventHandler(event, worldState));
 
   // EXAMINE_COMMAND: detailed description of an entity
   gameEventEmitter.on<ExamineCommandEvent>(EventType.EXAMINE_COMMAND,
     (event: ExamineCommandEvent) => examineCommandEventHandler(event, worldState, clientConnections, llmProvider, llmModel));
 
+  console.log('diocane');
   // DROP_COMMAND: drop an item from the player's inventory to the current room
   gameEventEmitter.on<DropCommandEvent>(EventType.DROP_COMMAND,
-    (event: DropCommandEvent) => dropCommandEventHandler(event, worldState, clientConnections));
+    async (event: DropCommandEvent) => await dropCommandEventHandler(event, worldState));
 }
 
 export { setGameEventEmitter };

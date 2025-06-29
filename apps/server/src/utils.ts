@@ -6,7 +6,7 @@ import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import { setGameEventEmitter } from "./game-event-emitter.js";
 import { routes } from "./routes.js";
-import { ClientConnetionMap } from "./events-handlers/types.js";
+import { ClientConnection, ClientConnetionMap } from "./events-handlers/types.js";
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
@@ -30,8 +30,7 @@ export async function buildServer(worldState: WorldType | null): Promise<Fastify
     throw new Error('World state is not loaded');
   }
   await server.register(fastifyWebsocket);
-  // FIXME: this is a hack to get the client connections to work, check types
-  setGameEventEmitter(worldState, clientConnections as unknown as ClientConnetionMap);
+  setGameEventEmitter(worldState, clientConnections);
   routes(server, worldState, clientConnections);
   return server;
 }
@@ -54,4 +53,17 @@ export function loadingWorldState(): WorldType | null {
     process.exit(1);
   }
   return worldState;
+}
+
+export function connectionsClientData(actorId: EntityId) {
+  return (clientConnections: ClientConnetionMap) => {
+    let clientData: ClientConnection | undefined;
+    for (const data of clientConnections.values()) {
+      if (data.playerId === actorId) {
+        clientData = data;
+        break;
+      }
+    }
+    return clientData;
+  }
 }

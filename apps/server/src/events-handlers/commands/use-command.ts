@@ -12,13 +12,11 @@ import {
   UseCommandEvent,
   WorldType
 } from "core/main.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 import { v4 as uuidv4 } from 'uuid';
-import { ClientConnetionMap } from "../types.js";
 
 export const useCommandEventHandler = (event: UseCommandEvent,
   worldState: WorldType | null,
-  clientConnections: ClientConnetionMap,
 ) => {
   const { actorId, itemKeywords, targetKeywords } = event;
   server.log.info(`[UseCommand] Received for actor ${actorId}: item "${itemKeywords}", target "${targetKeywords}"`);
@@ -26,13 +24,8 @@ export const useCommandEventHandler = (event: UseCommandEvent,
   if (!worldState) return;
 
   // 1. Find player's connection
-  let clientData;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
+
   if (!clientData) {
     server.log.warn(`[UseCommand] Could not find client for actor ${actorId}`);
     return;

@@ -14,13 +14,11 @@ import {
   SocketComponent,
   WorldType
 } from "core/main.js";
-import { server } from "../../utils.js";
+import { connectionsClientData, server } from "../../utils.js";
 import { v4 as uuidv4 } from 'uuid';
-import { ClientConnection, ClientConnetionMap } from "../types.js";
 
 export const putCommandEventHandler = async (event: PutCommandEvent,
   worldState: WorldType | null,
-  clientConnections: ClientConnetionMap,
 ) => {
   const { actorId, itemKeywords, targetKeywords } = event;
   server.log.info(`[PutCommand] Received for actor ${actorId}: item "${itemKeywords}", target "${targetKeywords}"`);
@@ -28,13 +26,8 @@ export const putCommandEventHandler = async (event: PutCommandEvent,
   if (!worldState) return;
 
   // 1. Find player's connection
-  let clientData: ClientConnection | undefined;
-  for (const data of clientConnections.values()) {
-    if (data.playerId === actorId) {
-      clientData = data;
-      break;
-    }
-  }
+  const clientData = connectionsClientData(actorId);
+
   if (!clientData) {
     server.log.warn(`[PutCommand] Could not find client for actor ${actorId}`);
     return;
